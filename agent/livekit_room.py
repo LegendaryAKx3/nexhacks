@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from livekit import rtc
-from livekit.api import AccessToken, VideoGrant
+from livekit.api import AccessToken, VideoGrants
 
 
 @dataclass
@@ -26,7 +26,7 @@ def build_token(
     token = AccessToken(config.api_key, config.api_secret)
     token.with_identity(identity)
     token.with_name(name)
-    token.with_grants(VideoGrant(room_join=True, room=config.room_name))
+    token.with_grants(VideoGrants(room_join=True, room=config.room_name))
     return token.to_jwt()
 
 
