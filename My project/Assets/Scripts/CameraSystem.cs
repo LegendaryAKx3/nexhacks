@@ -13,44 +13,29 @@ public class CameraSystem : MonoBehaviour
 
     private void Start()
     {
-        // Initialize camera priorities
-        if (camera1 != null)
-            camera1.Priority = 10;
-        if (camera2 != null)
-            camera2.Priority = 0;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     private void Update()
     {
-        timer += Time.deltaTime;
-
-        if (timer >= 5f)
-        {
-            timer = 0f;
-            SwitchCameras();
-        }
     }
 
     private void SwitchCameras()
     {
-        isCamera1Active = !isCamera1Active;
+        //isCamera1Active = !isCamera1Active;
 
-        if (isCamera1Active)
-        {
-            if (camera1 != null)
-                camera1.Priority = 10;
-            if (camera2 != null)
-                camera2.Priority = 0;
-        }
-        else
-        {
-            if (camera1 != null)
-                camera1.Priority = 0;
-            if (camera2 != null)
-                camera2.Priority = 10;
-        }
+        //if (isCamera1Active)
+        //{
+        //    if (camera1 != null)
+        //        camera1.Priority = 10;
+        //    if (camera2 != null)
+        //        camera2.Priority = 0;
+        //}
+        //else
+        //{
+        //    if (camera1 != null)
+        //        camera1.Priority = 0;
+        //    if (camera2 != null)
+        //        camera2.Priority = 10;
+        //}
     }
 }

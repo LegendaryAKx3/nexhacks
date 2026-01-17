@@ -84,11 +84,11 @@ public class PodcastController : MonoBehaviour
     {
         string url =
             $"https://api.voicerss.org/?" +
-            $"key={voiceRssApiKey}" +
-            $"hl={character.language}" + // Correct: language
-            $"v={character.voice}" +     // Correct: voice name
-            $"src={UnityWebRequest.EscapeURL(text)}" +
-            $"c=MP3" +
+            $"key={voiceRssApiKey}&" +
+            $"hl={character.language}&" +
+            $"v={character.voice}&" +
+            $"src={UnityWebRequest.EscapeURL(text)}&" +
+            $"c=MP3&" +
             $"f=44khz_16bit_stereo";
 
         using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.MPEG))
