@@ -1,0 +1,120 @@
+/* ArticleView - Editorial Style */
+
+.article-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+.article-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.article-lead {
+  font-size: var(--text-xl);
+  color: var(--color-cream);
+  line-height: 1.8;
+  border-left: 4px solid var(--color-accent);
+  padding-left: var(--space-lg);
+  font-style: italic;
+}
+
+.article-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.article-section h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-paper);
+  margin-top: var(--space-lg);
+}
+
+.article-section p {
+  font-size: var(--text-lg);
+  line-height: 1.9;
+  color: var(--color-cream);
+  opacity: 0.9;
+}
+
+/* Blockquote */
+.article-quote {
+  margin: var(--space-xl) 0;
+  padding: var(--space-xl);
+  background: var(--color-charcoal);
+  border-left: 4px solid var(--color-accent);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-style: italic;
+  color: var(--color-paper);
+  line-height: 1.6;
+  position: relative;
+}
+
+.article-quote::before {
+  content: '"';
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  font-size: 4rem;
+  color: var(--color-accent);
+  opacity: 0.3;
+  line-height: 1;
+  font-family: var(--font-display);
+}
+
+.article-quote cite {
+  display: block;
+  margin-top: var(--space-md);
+  font-family: var(--font-ui);
+  font-style: normal;
+  font-size: var(--text-sm);
+  color: var(--color-slate);
+}
+
+/* Sources */
+.article-sources {
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-graphite);
+}
+
+.article-sources h3 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-lg);
+}
+
+.article-sources ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.article-sources li {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+}
+
+.article-sources a {
+  color: var(--color-teal);
+  transition: color 0.3s ease;
+}
+
+.article-sources a:hover {
+  color: var(--color-cream);
+  text-decoration: underline;
+}
+
+.source-name {
+  color: var(--color-slate);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}

@@ -1,0 +1,47 @@
+/* LoadingSpinner - Editorial Style */
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-3xl);
+}
+
+.spinner {
+  border: 2px solid var(--color-graphite);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner--small .spinner {
+  width: 20px;
+  height: 20px;
+}
+
+.loading-spinner--medium .spinner {
+  width: 36px;
+  height: 36px;
+}
+
+.loading-spinner--large .spinner {
+  width: 48px;
+  height: 48px;
+  border-width: 3px;
+}
+
+.loading-text {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-slate);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}

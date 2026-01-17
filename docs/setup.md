@@ -1,18 +1,15 @@
-# PolyPod Setup Guide
+# DeepResearchPod Setup Guide
 
 ## Folder Structure
 
 ```
 /
-  docker-compose.yml          # Development
-  docker-compose.prod.yml     # Production (DigitalOcean)
   .env.example
   README.md
   plan.md
   setup.md
 
   backend/
-    Dockerfile
     requirements.txt
     app/
       __init__.py
@@ -20,27 +17,21 @@
       routers/
         topics.py
         generate.py
-        markets.py
+        research.py
       services/
-        polymarket.py
-        embeddings.py
-        clustering.py
+        parallel_ai.py
         research.py
         voice/
           elevenlabs.py
-          fish_audio.py
           livekit.py
       models/
         schemas.py
-      db/
-        mongodb.py
-
-  frontend/
-    package.json
-    src/
-      App.jsx
+      /
+        .env.example
+        README.md
+        plan.md
+        setup.md
       components/
-        TSNEVisualization.jsx
         TopicCard.jsx
         MediaPlayer.jsx
         ArticleView.jsx
@@ -58,8 +49,7 @@
     # WebSocket client for backend communication
 
   scripts/
-    digitalocean_setup.sh
-    sync_polymarket.py
+    refresh_research.py
 
   .github/
     workflows/
@@ -74,26 +64,26 @@ Create `.env` from `.env.example`:
 ```bash
 # MongoDB Atlas
 MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster.mongodb.net/?retryWrites=true&w=majority
-MONGODB_DB=polypod
+MONGODB_DB=deepresearchpod
 
 # Gemini API
 GEMINI_API_KEY=your-gemini-api-key
 
+# Parallel.ai
+PARALLEL_API_KEY=your-parallel-api-key
+PARALLEL_BASE_URL=https://api.parallel.ai  # optional
+
 # Voice Providers
 ELEVENLABS_API_KEY=your-elevenlabs-api-key
-FISH_AUDIO_API_KEY=your-fish-audio-api-key
 LIVEKIT_API_KEY=your-livekit-api-key
 LIVEKIT_API_SECRET=your-livekit-api-secret
 LIVEKIT_URL=wss://your-livekit-server.livekit.cloud
 
-# Character voice IDs (11Labs)
+# Character voice IDs (ElevenLabs)
 VOICE_PETER_GRIFFIN=voice_id_here
 VOICE_STEWIE_GRIFFIN=voice_id_here
 VOICE_SPONGEBOB=voice_id_here
 VOICE_PATRICK=voice_id_here
-
-# Polymarket (if API key required)
-POLYMARKET_API_KEY=optional
 
 # News API (Option B for research)
 NEWS_API_KEY=optional
@@ -104,71 +94,28 @@ LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000
 ```
 
-## Docker Compose (Development)
-
-```yaml
-version: "3.8"
-
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    env_file: .env
-    volumes:
-      - ./backend/app:/app/app  # Hot reload
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend/src:/app/src
-    environment:
-      - REACT_APP_API_URL=http://localhost:8000
-```
-
-## Docker Compose (Production)
-
-```yaml
-version: "3.8"
-
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "80:80"
-    restart: unless-stopped
-    depends_on:
-      - backend
-```
-
 ## Local Development
 
 ```bash
 # Clone repo
 git clone <repo-url>
-cd polypod
+cd deepresearchpod
 
 # Setup environment
 cp .env.example .env
 # Edit .env with your API keys
 
-# Start services
-docker compose up --build
+# Start backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Start frontend (new terminal)
+cd frontend
+npm install
+npm run dev
 
 # Backend: http://localhost:8000
 # Frontend: http://localhost:3000
@@ -187,8 +134,6 @@ motor
 pymongo
 google-generativeai
 httpx
-scikit-learn
-numpy
 pydantic
 python-dotenv
 ```
@@ -203,7 +148,6 @@ npm start
 
 Key dependencies:
 - React
-- react-plotly.js (TSNE visualization)
 - axios
 - react-router-dom
 
@@ -222,27 +166,20 @@ SSH into droplet and run:
 # Update system
 apt update && apt upgrade -y
 
-# Install Docker
-curl -fsSL https://get.docker.com | sh
-systemctl enable docker
-systemctl start docker
-
-# Install Docker Compose
-apt install docker-compose-plugin -y
-
 # Clone repo
 git clone <repo-url>
-cd polypod
+cd deepresearchpod
 
 # Setup env
 cp .env.example .env
 nano .env  # Add production values
 
-# Start
-docker compose -f docker-compose.prod.yml up -d --build
+# Start backend with a process manager (systemd or pm2)
+# Example: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Serve frontend with a static host (nginx or Caddy)
 
 # Verify
-docker compose -f docker-compose.prod.yml ps
 curl http://localhost:8000/health
 ```
 
@@ -254,44 +191,16 @@ curl http://localhost:8000/health
 
 Example Caddy config:
 ```
-polypod.tech {
+deepresearchpod.tech {
     reverse_proxy frontend:80
 }
 
-api.polypod.tech {
-    reverse_proxy backend:8000
+api.deepresearchpod.tech {
+  reverse_proxy 127.0.0.1:8000
 }
 ```
 
 ## GitHub Actions
-
-### Deploy Workflow
-
-`.github/workflows/deploy.yml`:
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to DigitalOcean
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DO_HOST }}
-          username: root
-          key: ${{ secrets.DO_SSH_KEY }}
-          script: |
-            cd /root/polypod
-            git pull
-            docker compose -f docker-compose.prod.yml up -d --build
-```
 
 ### Test Workflow
 
@@ -330,24 +239,7 @@ jobs:
 2. Create database user
 3. Whitelist IPs (or allow from anywhere for dev)
 4. Get connection string
-5. Create vector search index on `markets` collection:
-
-```json
-{
-  "name": "markets_vector_search",
-  "type": "vectorSearch",
-  "definition": {
-    "fields": [
-      {
-        "type": "vector",
-        "path": "embedding",
-        "numDimensions": 768,
-        "similarity": "cosine"
-      }
-    ]
-  }
-}
-```
+5. Create the required collections (`sources`, `articles`, `topics`, `research`) as needed (MongoDB will also create them automatically on first insert).
 
 ## Unity Setup
 

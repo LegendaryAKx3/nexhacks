@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+motor
+pymongo
+google-generativeai
+httpx
+pydantic
+python-dotenv
+livekit-api

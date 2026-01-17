@@ -1,4 +1,4 @@
-# PolyPod Technical Architecture
+# DeepResearchPod Technical Architecture
 
 ## Service Overview
 
@@ -6,13 +6,18 @@
 +------------------+     +------------------+     +------------------+
 |   React Frontend |<--->|  FastAPI Backend |<--->|  MongoDB Atlas   |
 +------------------+     +------------------+     +------------------+
-                               |     |
-                    +----------+     +----------+
-                    |                           |
-              +-----v-----+              +------v------+
-              |  11Labs   |              |   Gemini    |
-              |  (Voice)  |              | (AI/Embed)  |
-              +-----------+              +-------------+
+           |     |     |
+        +----------+     |     +----------+
+        |                |                |
+      +-----v-----+    +-----v-----+    +-----v-----+
+      | ElevenLabs|    | Parallel  |    |  Gemini   |
+      |  (Voice)  |    |   .ai     |    | (Generate)|
+      +-----------+    +-----------+    +-----------+
+
+                    +------------------+
+                    |     LiveKit      |
+                    | (Realtime audio) |
+                    +------------------+
 
 +------------------+
 |  Unity Client    |  (Desktop only, communicates with backend)
@@ -24,13 +29,12 @@
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health` | Health check |
-| GET | `/topics` | TSNE visualization data (clusters + coordinates) |
-| GET | `/topics/{id}` | Topic details with research |
-| GET | `/feed` | YouTube-style topic feed (alternative to TSNE) |
+| GET | `/topics` | Ranked topic feed  |
+| GET | `/topics/{id}` | Topic details with research + sources |
+| POST | `/research/refresh` | Refresh research for a topic (Parallel.ai search + synthesis) |
 | POST | `/generate/article` | Generate text article for topic |
 | POST | `/generate/script` | Generate podcast/video script |
 | POST | `/interrupt` | Handle user interruption mid-content |
-| GET | `/markets/sync` | Trigger Polymarket data refresh |
 | GET | `/watch/{content_id}` | Shareable video content page |
 | GET | `/listen/{content_id}` | Shareable audio/podcast page |
 | GET | `/read/{content_id}` | Shareable article page |
@@ -40,21 +44,20 @@
 ```python
 # GET /topics
 {
-  "clusters": [
+  "topics": [
     {
-      "id": "cluster_123",
+      "id": "topic_123",
       "label": "US Politics",
       "emoji": "🇺🇸",
-      "tsne_x": 0.45,
-      "tsne_y": -0.23,
-      "market_count": 42
+      "article_count": 42,
+      "last_refreshed_at": "2026-01-17T12:00:00Z"
     }
   ]
 }
 
 # POST /generate/script
 Request: {
-  "topic_id": "cluster_123",
+  "topic_id": "topic_123",
   "duration_minutes": 15,
   "format": "podcast"  # or "video"
 }
@@ -72,41 +75,50 @@ Request: {
 }
 Response: {
   "response_text": "...",
-  "audio_url": "https://...",  # 11Labs generated
+  "audio_url": "https://...",  # ElevenLabs generated
   "resume_position_seconds": 245
 }
 ```
 
 ## MongoDB Collections
 
-### markets
+### sources
 ```javascript
 {
   _id: ObjectId,
-  polymarket_id: String,        // Unique ID from Polymarket
+  provider: String,             // "parallel_ai" (or other)
   title: String,
-  description: String,
-  probability: Number,          // 0.0 - 1.0
-  volume: Number,
-  end_date: Date,
-  embedding: [Number],          // Gemini embedding vector
-  embedding_model: String,
-  cluster_id: ObjectId,         // Reference to cluster
+  url: String,
+  snippet: String,
+  source_name: String,          // "Reuters", "AP", etc.
+  published_at: Date,
+  fetched_at: Date
+}
+```
+
+### articles
+```javascript
+{
+  _id: ObjectId,
+  source_id: ObjectId,
+  canonical_url: String,
+  title: String,
+  excerpt: String,
+  published_at: Date,
+  topic_id: ObjectId,           // Reference to topic (optional until clustered)
   fetched_at: Date,
   updated_at: Date
 }
 ```
 
-### clusters
+### topics
 ```javascript
 {
   _id: ObjectId,
-  label: String,                // Human-readable topic name
-  emoji: String,                // Visual identifier
-  tsne_x: Number,
-  tsne_y: Number,
-  market_ids: [ObjectId],
-  centroid: [Number],           // Cluster center in embedding space
+  label: String,
+  emoji: String,
+  article_ids: [ObjectId],
+  last_refreshed_at: Date,
   created_at: Date
 }
 ```
@@ -115,7 +127,7 @@ Response: {
 ```javascript
 {
   _id: ObjectId,
-  cluster_id: ObjectId,
+  topic_id: ObjectId,
   sources: [{
     title: String,
     url: String,
@@ -124,8 +136,9 @@ Response: {
     published_at: Date
   }],
   summary: String,              // Gemini-generated summary
-  sentiment_polymarket: String, // Aggregated from market probabilities
-  sentiment_mainstream: String, // Aggregated from news sources
+  key_claims: [String],
+  open_questions: [String],
+  disagreements: [String],
   generated_at: Date
 }
 ```
@@ -134,7 +147,7 @@ Response: {
 ```javascript
 {
   _id: ObjectId,
-  cluster_id: ObjectId,
+  topic_id: ObjectId,
   research_id: ObjectId,
   duration_minutes: Number,     // 5, 10, 15, or 30
   format: String,               // "podcast" or "video"
@@ -143,7 +156,7 @@ Response: {
     text: String,
     start_seconds: Number,
     end_seconds: Number,
-    audio_url: String           // 11Labs generated audio
+    audio_url: String           // ElevenLabs generated audio
   }],
   status: String,               // "generating", "ready", "failed"
   created_at: Date
@@ -154,7 +167,7 @@ Response: {
 ```javascript
 {
   _id: ObjectId,
-  cluster_id: ObjectId,
+  topic_id: ObjectId,
   research_id: ObjectId,
   duration_minutes: Number,
   title: String,
@@ -167,27 +180,7 @@ Response: {
 }
 ```
 
-## Vector Search Index
-
-```json
-{
-  "name": "markets_vector_search",
-  "type": "vectorSearch",
-  "definition": {
-    "fields": [
-      { "type": "vector", "path": "embedding", "numDimensions": 768, "similarity": "cosine" }
-    ]
-  }
-}
-```
-
 ## Gemini Integration
-
-### Embeddings
-- Model: `gemini-embedding-001` (GA, top MTEB leaderboard)
-- Dimensions: 768
-- Use `RETRIEVAL_DOCUMENT` for indexing markets
-- Use `RETRIEVAL_QUERY` for search
 
 ### Generation
 - Model: `gemini-2.5-flash` (stable) or `gemini-3-flash-preview` (latest)
@@ -211,30 +204,22 @@ Research context: {research_summary}
 ## Voice Integration
 
 ### Providers
-- **11Labs** - Primary TTS for character voices
-- **fish.audio** - Alternative TTS option
-- **livekit** - Real-time audio streaming
+- **ElevenLabs** - Primary TTS for character voices
+- **LiveKit** - Real-time audio rooms for playback + interruptions
 
 ### Usage
 - Generate audio for each script segment
 - Voice IDs mapped to characters
 - Cache generated audio in object storage
-- Stream audio to frontend for playback
+- Stream audio via LiveKit (or deliver URLs for non-realtime clients)
 
-## TSNE Visualization
+## Topic Discovery (Feed-Based)
 
-1. Fetch all market embeddings from MongoDB
-2. Run TSNE dimensionality reduction (768D -> 2D)
-3. Apply clustering (k-means or DBSCAN)
-4. Assign labels/emojis to clusters (Gemini)
-5. Store cluster metadata in MongoDB
-6. Frontend renders interactive scatter plot
-
-### Visualization Requirements
-- Clusters visually distinct (color-coded)
-- Hover shows cluster label + emoji
-- Click navigates to topic detail
-- Responsive for desktop
+1. Parallel.ai searches for fresh articles (by topic query and/or trending terms)
+2. Store normalized sources/articles in MongoDB
+3. Group articles into topics using simple heuristics (keywords/entities) and recency
+5. Rank topics for the feed (recency + volume + novelty)
+6. Frontend renders a ranked list/grid feed
 
 ## User Interruption Flow
 
@@ -254,7 +239,7 @@ POST /interrupt with:
 Backend:
   1. Get script context up to current position
   2. Generate response via Gemini (with character personality)
-  3. Generate audio via 11Labs
+  3. Generate audio via ElevenLabs
   4. Return response + audio URL
         |
         v
@@ -265,25 +250,18 @@ Frontend:
 
 ## Research Pipeline Options
 
-### Option A: Gemini Grounding
-- Use Gemini's built-in search/grounding capability
-- Simpler integration
-- Less control over sources
+### Primary: Parallel.ai
+- Use Parallel.ai to search and retrieve relevant recent articles
+- Dedupe + normalize sources, then synthesize a structured brief with Gemini
 
-### Option B: External News API
-- Fetch from NewsAPI, Google News, or similar
-- More control over sources and filtering
-- Requires API key management
-- Can curate specific outlets
-
-Decision deferred to implementation phase.
+### Fallback: Gemini Grounding (Optional)
+- Use Gemini search/grounding only if Parallel.ai is unavailable
 
 ## Cron Jobs / Background Tasks
 
 | Task | Frequency | Description |
 |------|-----------|-------------|
-| Polymarket sync | Every 1 hour | Fetch latest markets from Polymarket API |
-| Embedding update | After sync | Generate embeddings for new/updated markets |
-| Clustering | Every hour | Re-run TSNE + clustering |
-| Research refresh | Every 2 hours | Update news articles per cluster |
+| Parallel.ai refresh | Every 30–60 min | Fetch new articles for configured queries/topics |
+| Topic grouping | Every 1–2 hours | Update topic groups and rankings |
+| Research refresh | Every 1–2 hours | Update research briefs per topic |
 | Audio cleanup | Daily | Remove unused audio files |
