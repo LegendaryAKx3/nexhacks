@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "WebSearch",
+      "Bash(py test_quick.py)",
+      "Bash(py test_api.py:*)",
+      "Bash(timeout 120 py:*)",
+      "Skill(frontend-design)",
+      "Bash(npm run build:*)",
+      "Bash(wc:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
