@@ -36,8 +36,6 @@ const FormatSelector = ({
         { id: "read", label: "Read", Icon: ReadIcon, description: "Long-form written article" },
     ];
 
-    const durations = [5, 10, 15, 30];
-
     return (
         <div className="format-selector">
             <div className="format-options">
@@ -56,11 +54,25 @@ const FormatSelector = ({
 
             <div className="duration-selector">
                 <span className="duration-label">Duration</span>
-                <div className="duration-options">
-                    {durations.map((duration) => (
+                <div className="duration-slider">
+                    <input
+                        type="range"
+                        min="5"
+                        max="30"
+                        step="1"
+                        value={selectedDuration}
+                        onChange={(event) => onDurationChange(Number(event.target.value))}
+                        className="duration-range"
+                        aria-label="Duration in minutes"
+                    />
+                    <span className="duration-value">{selectedDuration} min</span>
+                </div>
+                <div className="duration-quick">
+                    {[5, 10, 30].map((duration) => (
                         <button
                             key={duration}
-                            className={`duration-option ${selectedDuration === duration ? 'active' : ''}`}
+                            type="button"
+                            className={`duration-chip ${selectedDuration === duration ? 'active' : ''}`}
                             onClick={() => onDurationChange(duration)}
                         >
                             {duration} min
