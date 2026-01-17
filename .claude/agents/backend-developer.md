@@ -168,7 +168,6 @@ Prepare services for deployment with comprehensive validation.
 Readiness checklist:
 - OpenAPI documentation complete
 - Database migrations verified
-- Container images built
 - Configuration externalized
 - Load tests executed
 - Security scan passed
@@ -187,16 +186,6 @@ Monitoring and observability:
 - Error rate monitoring
 - Custom business metrics
 - Alert configuration
-
-Docker configuration:
-- Multi-stage build optimization
-- Security scanning in CI/CD
-- Environment-specific configs
-- Volume management for data
-- Network configuration
-- Resource limits setting
-- Health check implementation
-- Graceful shutdown handling
 
 Environment management:
 - Configuration separation by environment

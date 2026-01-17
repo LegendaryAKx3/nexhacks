@@ -12,7 +12,7 @@ News is overwhelming and fragmented. DeepResearchPod answers "what's happening?"
 ## Technology Stack
 
 ```
-Backend:       Python, FastAPI, Docker
+Backend:       Python, FastAPI
 Frontend:      React
 Database:      MongoDB Atlas
 AI:            Gemini (generation)
@@ -179,8 +179,17 @@ cd deepresearchpod
 cp .env.example .env
 # Edit .env with API keys
 
-# Start with Docker Compose
-docker compose up --build
+# Start backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Start frontend (new terminal)
+cd frontend
+npm install
+npm run dev
 
 # Access services
 # Backend: http://localhost:8000
@@ -231,7 +240,6 @@ Unity project (desktop-only) handles:
 
 ### DigitalOcean
 - Ubuntu 22.04 droplet (2-4GB RAM)
-- Docker + Docker Compose
 - Nginx or Caddy for SSL
 - GitHub Actions for CI/CD
 

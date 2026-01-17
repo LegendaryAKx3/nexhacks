@@ -2,7 +2,6 @@
 
 > Transform overwhelming news into engaging, source-backed content—watch, listen, or read on your schedule.
 
-[![Deploy Status](https://github.com/LegendaryAKx3/nexhacks/workflows/Deploy/badge.svg)](https://github.com/LegendaryAKx3/nexhacks/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🎯 Vision
@@ -34,7 +33,7 @@ Parallel.ai → Articles → MongoDB → Topic Grouping
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | Python, FastAPI, Docker |
+| **Backend** | Python, FastAPI |
 | **Frontend** | React |
 | **Database** | MongoDB Atlas |
 | **AI** | Gemini (generation) |
@@ -48,7 +47,6 @@ Parallel.ai → Articles → MongoDB → Topic Grouping
 
 ### Prerequisites
 
-- Docker & Docker Compose
 - Node.js 18+ (for frontend development)
 - Python 3.11+ (for backend development)
 - API keys for: Gemini, Parallel.ai, ElevenLabs, LiveKit
@@ -64,8 +62,17 @@ cd nexhacks
 cp .env.example .env
 # Edit .env with your API keys
 
-# Start services with Docker Compose
-docker compose up --build
+# Start backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# In another terminal, start frontend
+cd frontend
+npm install
+npm run dev
 
 # Access the application
 # Frontend: http://localhost:3000
@@ -175,16 +182,16 @@ cd nexhacks
 cp .env.example .env
 nano .env  # Add production API keys
 
-# Deploy with Docker Compose
-docker compose -f docker-compose.prod.yml up -d --build
-
+# Run backend with a process manager (systemd or pm2)
+# Example: uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Serve frontend with a static host (nginx or Caddy)
 # Verify deployment
 curl http://localhost:8000/health
 ```
 
 ### CI/CD
 
-Automated deployment via GitHub Actions on push to `main` branch. See [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+Automated deployment can be added via GitHub Actions when a target infrastructure is selected.
 
 ## 🧪 Testing
 
@@ -197,8 +204,8 @@ pytest
 cd frontend
 npm test
 
-# Integration tests
-docker compose -f docker-compose.test.yml up --abort-on-container-exit
+# Integration tests (optional)
+# Add a test runner when integration tests are implemented
 ```
 
 ## 📡 API Endpoints

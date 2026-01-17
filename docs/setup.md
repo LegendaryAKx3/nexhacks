@@ -4,15 +4,12 @@
 
 ```
 /
-  docker-compose.yml          # Development
-  docker-compose.prod.yml     # Production (DigitalOcean)
   .env.example
   README.md
   plan.md
   setup.md
 
   backend/
-    Dockerfile
     requirements.txt
     app/
       __init__.py
@@ -29,13 +26,11 @@
           livekit.py
       models/
         schemas.py
-      db/
-        mongodb.py
-
-  frontend/
-    package.json
-    src/
-      App.jsx
+      /
+        .env.example
+        README.md
+        plan.md
+        setup.md
       components/
         TopicCard.jsx
         MediaPlayer.jsx
@@ -54,7 +49,6 @@
     # WebSocket client for backend communication
 
   scripts/
-    digitalocean_setup.sh
     refresh_research.py
 
   .github/
@@ -100,58 +94,6 @@ LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000
 ```
 
-## Docker Compose (Development)
-
-```yaml
-version: "3.8"
-
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    env_file: .env
-    volumes:
-      - ./backend/app:/app/app  # Hot reload
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend/src:/app/src
-    environment:
-      - REACT_APP_API_URL=http://localhost:8000
-```
-
-## Docker Compose (Production)
-
-```yaml
-version: "3.8"
-
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "80:80"
-    restart: unless-stopped
-    depends_on:
-      - backend
-```
-
 ## Local Development
 
 ```bash
@@ -163,8 +105,17 @@ cd deepresearchpod
 cp .env.example .env
 # Edit .env with your API keys
 
-# Start services
-docker compose up --build
+# Start backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Start frontend (new terminal)
+cd frontend
+npm install
+npm run dev
 
 # Backend: http://localhost:8000
 # Frontend: http://localhost:3000
@@ -215,14 +166,6 @@ SSH into droplet and run:
 # Update system
 apt update && apt upgrade -y
 
-# Install Docker
-curl -fsSL https://get.docker.com | sh
-systemctl enable docker
-systemctl start docker
-
-# Install Docker Compose
-apt install docker-compose-plugin -y
-
 # Clone repo
 git clone <repo-url>
 cd deepresearchpod
@@ -231,11 +174,12 @@ cd deepresearchpod
 cp .env.example .env
 nano .env  # Add production values
 
-# Start
-docker compose -f docker-compose.prod.yml up -d --build
+# Start backend with a process manager (systemd or pm2)
+# Example: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Serve frontend with a static host (nginx or Caddy)
 
 # Verify
-docker compose -f docker-compose.prod.yml ps
 curl http://localhost:8000/health
 ```
 
@@ -252,39 +196,11 @@ deepresearchpod.tech {
 }
 
 api.deepresearchpod.tech {
-    reverse_proxy backend:8000
+  reverse_proxy 127.0.0.1:8000
 }
 ```
 
 ## GitHub Actions
-
-### Deploy Workflow
-
-`.github/workflows/deploy.yml`:
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to DigitalOcean
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DO_HOST }}
-          username: root
-          key: ${{ secrets.DO_SSH_KEY }}
-          script: |
-            cd /root/deepresearchpod
-            git pull
-            docker compose -f docker-compose.prod.yml up -d --build
-```
 
 ### Test Workflow
 
