@@ -10,7 +10,7 @@ News is overwhelming and fragmented. DeepResearchPod turns “what’s happening
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Python, FastAPI, Docker |
+| Backend | Python, FastAPI |
 | Frontend | React |
 | Database | MongoDB Atlas |
 | AI | Gemini (generation) |
