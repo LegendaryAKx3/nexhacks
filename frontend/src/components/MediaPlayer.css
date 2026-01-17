@@ -1,0 +1,231 @@
+/* MediaPlayer - Editorial Style */
+
+.media-player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  background: var(--color-charcoal);
+  border: 1px solid var(--color-graphite);
+  padding: var(--space-xl);
+}
+
+/* Video Container */
+.video-container {
+  aspect-ratio: 16 / 9;
+  background: var(--color-ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.video-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, var(--color-accent) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, var(--color-teal) 0%, transparent 40%);
+  opacity: 0.1;
+}
+
+.video-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  position: relative;
+  z-index: 1;
+}
+
+.video-placeholder__icon {
+  font-size: 5rem;
+  opacity: 0.4;
+}
+
+.video-placeholder p {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--color-cream);
+}
+
+.video-placeholder__note {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-slate);
+}
+
+/* Audio Visualization */
+.audio-visualization {
+  height: 140px;
+  background: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.audio-visualization::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-teal) 100%);
+  opacity: 0.05;
+}
+
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.waveform-bar {
+  flex: 1;
+  background: var(--color-accent);
+  opacity: 0.25;
+  transition: opacity 0.3s ease;
+}
+
+.waveform-bar.animate {
+  animation: waveform 0.6s ease-in-out infinite alternate;
+  opacity: 0.7;
+}
+
+@keyframes waveform {
+  0% {
+    transform: scaleY(0.2);
+  }
+
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+/* Player Info */
+.player-info {
+  text-align: center;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-graphite);
+}
+
+.player-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-xs);
+}
+
+.player-description {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-slate);
+}
+
+/* Player Controls */
+.player-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* Progress Bar */
+.progress-container {
+  cursor: pointer;
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--color-graphite);
+  margin-bottom: var(--space-sm);
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: var(--color-accent);
+  border-radius: 50%;
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-slate);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Control Buttons */
+.control-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xl);
+}
+
+.control-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-slate);
+  border: 1px solid var(--color-graphite);
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  color: var(--color-cream);
+  border-color: var(--color-slate);
+}
+
+.control-btn--play {
+  width: 64px;
+  height: 64px;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-paper);
+}
+
+.control-btn--play:hover {
+  background: var(--color-accent-dark);
+  transform: scale(1.05);
+}
+
+/* Interrupt Button */
+.interrupt-btn {
+  align-self: center;
+  padding: var(--space-md) var(--space-xl);
+  background: transparent;
+  border: 1px solid var(--color-graphite);
+  color: var(--color-cream);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transition: all 0.3s ease;
+}
+
+.interrupt-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

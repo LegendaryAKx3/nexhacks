@@ -1,5 +1,6 @@
 import { Link, Route, Routes } from "react-router-dom";
 
+import Layout from "./components/Layout.jsx";
 import Home from "./pages/Home.jsx";
 import Topic from "./pages/Topic.jsx";
 import Watch from "./pages/Watch.jsx";
@@ -9,8 +10,7 @@ import Agents from "./pages/Agents.jsx";
 
 const App = () => {
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: "24px" }}>
-      <h1>DeepResearchPod</h1>
+    <Layout>
       <nav style={{ marginBottom: "16px" }}>
         <Link to="/" style={{ marginRight: "12px" }}>
           Home
@@ -25,7 +25,7 @@ const App = () => {
         <Route path="/listen/:contentId" element={<Listen />} />
         <Route path="/read/:contentId" element={<Read />} />
       </Routes>
-    </div>
+    </Layout>
   );
 };
 

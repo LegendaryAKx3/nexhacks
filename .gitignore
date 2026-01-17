@@ -1,4 +1,6 @@
 seda/
+node_modules/
+**/node_modules/
 .venv/
 .env
 __pycache__/
