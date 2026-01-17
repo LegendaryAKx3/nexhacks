@@ -22,9 +22,13 @@ pip install -r requirements.txt
 python duo_room.py
 ```
 
+This script loads env vars from `.env` automatically if present.
+
 ## Input modes
 - `AGENT_INPUT_MODE=stdin`: type messages in the terminal. Agents respond in the LiveKit room using their voices.
-- `AGENT_INPUT_MODE=livekit`: reserved for wiring LiveKit text input or STT. Not implemented yet.
+- `AGENT_INPUT_MODE=livekit`: listens for LiveKit data messages (`type: user_text`) and responds in-room.
+
+When using the web app voice page, set `AGENT_INPUT_MODE=livekit` before starting `duo_room.py`.
 
 ## Files
 - `duo_room.py`: main runner that launches both agents and alternates replies.

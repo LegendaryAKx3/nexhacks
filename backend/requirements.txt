@@ -6,3 +6,4 @@ google-generativeai
 httpx
 pydantic
 python-dotenv
+livekit-api

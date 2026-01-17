@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from dataclasses import dataclass
 from typing import List
@@ -10,6 +11,10 @@ from prompts import PETER_SYSTEM_PROMPT, STEWIE_SYSTEM_PROMPT
 from providers.elevenlabs_tts import get_voice_id, load_elevenlabs_from_env
 from providers.gemini import load_gemini_from_env
 
+try:
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - optional dependency
+    load_dotenv = None
 
 @dataclass
 class AgentProfile:
@@ -47,6 +52,40 @@ async def read_stdin(queue: asyncio.Queue) -> None:
         await queue.put(user_text)
 
 
+def _decode_user_text(data_packet: rtc.DataPacket) -> str | None:
+    try:
+        payload = json.loads(data_packet.data.decode("utf-8"))
+        if isinstance(payload, dict) and payload.get("type") == "user_text":
+            text = payload.get("text", "")
+        elif isinstance(payload, str):
+            text = payload
+        else:
+            text = ""
+    except json.JSONDecodeError:
+        text = data_packet.data.decode("utf-8", errors="ignore")
+
+    text = text.strip()
+    return text or None
+
+
+def attach_data_listener(
+    room: rtc.Room,
+    queue: asyncio.Queue,
+    loop: asyncio.AbstractEventLoop,
+    ignore_identities: set[str],
+) -> None:
+    def _on_data(data_packet: rtc.DataPacket) -> None:
+        participant = data_packet.participant
+        if participant and participant.identity in ignore_identities:
+            return
+
+        text = _decode_user_text(data_packet)
+        if text:
+            loop.call_soon_threadsafe(queue.put_nowait, text)
+
+    room.on("data_received", _on_data)
+
+
 def build_messages(system_prompt: str, history: History, user_text: str) -> List[dict]:
     prompt = system_prompt
     if history.turns:
@@ -73,11 +112,18 @@ async def init_agent(profile: AgentProfile, config: LiveKitConfig) -> AgentState
 
 
 async def speak(agent: AgentState, tts, text: str) -> None:
+    payload = json.dumps(
+        {"type": "agent_text", "speaker": agent.profile.name, "text": text}
+    )
+    agent.room.local_participant.publish_data(payload, reliable=True)
     pcm_audio = tts.synthesize(text=text, voice_id=agent.profile.voice_id)
     await play_pcm(agent.audio_source, pcm_audio, sample_rate=16000, channels=1)
 
 
 async def run_duo() -> None:
+    if load_dotenv is not None:
+        load_dotenv()
+
     input_mode = os.getenv("AGENT_INPUT_MODE", "stdin").strip().lower()
     max_history = int(os.getenv("MAX_HISTORY_TURNS", "6"))
 
@@ -118,11 +164,16 @@ async def run_duo() -> None:
     queue: asyncio.Queue = asyncio.Queue()
     if input_mode == "stdin":
         asyncio.create_task(read_stdin(queue))
-    else:
-        raise NotImplementedError(
-            "LiveKit text input is not wired yet. "
-            "Use AGENT_INPUT_MODE=stdin for now."
+    elif input_mode == "livekit":
+        loop = asyncio.get_running_loop()
+        attach_data_listener(
+            room=peter_state.room,
+            queue=queue,
+            loop=loop,
+            ignore_identities={peter_state.profile.identity, stewie_state.profile.identity},
         )
+    else:
+        raise ValueError("AGENT_INPUT_MODE must be 'stdin' or 'livekit'")
 
     history = History(max_turns=max_history)
     turn = 0
