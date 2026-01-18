@@ -14,11 +14,20 @@ from app.routers import generate, research, topics, voice
 def _get_cors_origins() -> list[str]:
     raw = os.getenv("CORS_ORIGINS", "")
     origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
-    if origins:
-        return origins
-    if os.getenv("ENV", "development").lower() == "development":
+    if "*" in origins:
         return ["*"]
-    return []
+
+    if os.getenv("ENV", "development").lower() == "development":
+        for origin in (
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ):
+            if origin not in origins:
+                origins.append(origin)
+
+    return origins
 
 
 if load_dotenv is not None:

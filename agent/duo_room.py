@@ -115,7 +115,7 @@ async def speak(agent: AgentState, tts, text: str) -> None:
     payload = json.dumps(
         {"type": "agent_text", "speaker": agent.profile.name, "text": text}
     )
-    agent.room.local_participant.publish_data(payload, reliable=True)
+    await agent.room.local_participant.publish_data(payload, reliable=True)
     pcm_audio = tts.synthesize(text=text, voice_id=agent.profile.voice_id)
     await play_pcm(agent.audio_source, pcm_audio, sample_rate=16000, channels=1)
 
@@ -162,17 +162,17 @@ async def run_duo() -> None:
     )
 
     queue: asyncio.Queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+    attach_data_listener(
+        room=peter_state.room,
+        queue=queue,
+        loop=loop,
+        ignore_identities={peter_state.profile.identity, stewie_state.profile.identity},
+    )
+
     if input_mode == "stdin":
         asyncio.create_task(read_stdin(queue))
-    elif input_mode == "livekit":
-        loop = asyncio.get_running_loop()
-        attach_data_listener(
-            room=peter_state.room,
-            queue=queue,
-            loop=loop,
-            ignore_identities={peter_state.profile.identity, stewie_state.profile.identity},
-        )
-    else:
+    elif input_mode != "livekit":
         raise ValueError("AGENT_INPUT_MODE must be 'stdin' or 'livekit'")
 
     history = History(max_turns=max_history)

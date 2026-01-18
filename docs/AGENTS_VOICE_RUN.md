@@ -11,12 +11,13 @@ Make sure these are set:
 LIVEKIT_URL=wss://your-livekit-server.livekit.cloud
 LIVEKIT_API_KEY=your-livekit-api-key
 LIVEKIT_API_SECRET=your-livekit-api-secret
-CORS_ORIGINS=http://localhost:5173
+LIVEKIT_ROOM=deepresearchpod-duo
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
 Notes:
-- LiveKit clients require a **ws/wss URL** and a **token** to connect. citeturn0search0turn0search1
-- Rooms are created automatically when the first participant joins with a valid token. citeturn0search0turn0search1
+- LiveKit clients require a **ws/wss URL** and a **token** to connect.
+- Rooms are created automatically when the first participant joins with a valid token.
 
 ### Agent (`agent/.env`)
 ```env
@@ -37,7 +38,7 @@ ELEVENLABS_VOICE_ID_STEWIE=voice_id_for_stewie
 AGENT_INPUT_MODE=livekit
 ```
 
-The agent listens for LiveKit **data messages** (`type: user_text`) and replies over audio + data messages (`type: agent_text`). This is based on LiveKit’s data packet flow. citeturn0search8
+The agent listens for LiveKit **data messages** (`type: user_text`) and replies over audio + data messages (`type: agent_text`).
 
 ---
 
@@ -58,7 +59,7 @@ uvicorn app.main:app --reload --app-dir backend
 
 This avoids the `ModuleNotFoundError: No module named 'app'` error when `uvicorn` runs from the root directory.
 
-The backend issues LiveKit access tokens using your API key/secret, which are required for the client to join the room. citeturn0search5turn0search7
+The backend issues LiveKit access tokens using your API key/secret, which are required for the client to join the room.
 
 ---
 
@@ -99,13 +100,13 @@ If the web page shows a **Network Error**, check these in order:
 - Confirm `http://localhost:8000/health` returns `{"status":"ok"}`.
 
 2) **CORS is allowed**
-- Ensure `CORS_ORIGINS=http://localhost:5173` is set for backend.
+- Ensure `CORS_ORIGINS` includes `http://localhost:5173` (Vite default).
 
 3) **LiveKit URL is correct**
-- Must be `ws://...` or `wss://...` (no `http://`). citeturn0search0turn0search1
+- Must be `ws://...` or `wss://...` (no `http://`).
 
 4) **Token is valid**
-- Tokens must be generated with a `roomJoin` grant for the same room name. citeturn0search5turn0search7
+- Tokens must be generated with a `roomJoin` grant for the same room name.
 
 5) **Room name is consistent**
 - Frontend uses `deepresearchpod-duo`. The agent must use the same value.
