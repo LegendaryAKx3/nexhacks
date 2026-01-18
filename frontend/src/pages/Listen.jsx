@@ -1,12 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import axios from "axios";
+import { API_URL } from "../config.js";
 import MediaPlayer from "../components/MediaPlayer.jsx";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import "./ContentPage.css";
 
 const Listen = () => {
   const { contentId } = useParams();
   const [showQuestion, setShowQuestion] = useState(false);
   const [question, setQuestion] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [scriptData, setScriptData] = useState(null);
+
+  useEffect(() => {
+    const generateScript = async () => {
+      try {
+        setLoading(true);
+        // contentId format: "topicId_format_duration"
+        const parts = contentId.split("_");
+        const topicId = parts[0];
+        const format = parts[1] || "podcast";
+        const duration = parseInt(parts[2], 10) || 5;
+
+        const response = await axios.post(`${API_URL}/generate/script`, {
+          topic_id: topicId,
+          duration_minutes: duration,
+          format: format
+        });
+
+        setScriptData(response.data);
+      } catch (err) {
+        console.error("Failed to generate script:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (contentId) {
+      generateScript();
+    }
+  }, [contentId]);
 
   const handleInterrupt = (currentTime) => {
     setShowQuestion(true);
@@ -17,6 +51,10 @@ const Listen = () => {
     setQuestion("");
     setShowQuestion(false);
   };
+
+  if (loading) {
+     return <LoadingSpinner size="large" text="Generating Script..." />;
+  }
 
   return (
     <div className="content-page">
@@ -38,6 +76,20 @@ const Listen = () => {
         description="Listen to an engaging discussion of the key stories"
         onInterrupt={handleInterrupt}
       />
+
+      {scriptData && (
+        <div className="transcript-section">
+          <h3>Transcript</h3>
+          <div className="transcript-container">
+            {scriptData.segments.map((segment, idx) => (
+              <div key={idx} className="transcript-segment">
+                <strong>{segment.speaker}: </strong>
+                <span>{segment.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showQuestion && (
         <div className="question-modal">

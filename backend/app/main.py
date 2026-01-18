@@ -6,6 +6,12 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     load_dotenv = None
 
+if load_dotenv is not None:
+    backend_dir = Path(__file__).resolve().parents[1]
+    repo_root = backend_dir.parent
+    load_dotenv(repo_root / ".env")
+    load_dotenv(backend_dir / ".env")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,12 +36,6 @@ def _get_cors_origins() -> list[str]:
 
     return origins
 
-
-if load_dotenv is not None:
-    backend_dir = Path(__file__).resolve().parents[1]
-    repo_root = backend_dir.parent
-    load_dotenv(repo_root / ".env")
-    load_dotenv(backend_dir / ".env")
 
 app = FastAPI(title="DeepResearchPod API")
 
