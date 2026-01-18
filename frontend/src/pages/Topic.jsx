@@ -28,10 +28,10 @@ const Topic = () => {
         // Map slug to proper label
         const topicLabels = {
           politics: "US Politics",
+          sports: "Sports",
           tech: "Tech & AI",
           climate: "Climate Change",
           economy: "Global Economy",
-          space: "Space Exploration",
           health: "Health & Science"
         };
         setTopic({
@@ -100,7 +100,7 @@ const Topic = () => {
 
       <header className="topic-header">
         <img 
-          src={`/icons/${topic.id}.png`}
+          src={topic.id === 'sports' ? `/icons/${topic.id}.svg` : `/icons/${topic.id}.png`}
           alt={topic.label}
           className="topic-header__icon"
         />

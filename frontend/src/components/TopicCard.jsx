@@ -14,7 +14,7 @@ const TopicCard = ({ topic, featured = false }) => {
   };
 
   // Use topic.id directly for icon since we now use slug-based IDs
-  const iconSrc = `/icons/${topic.id}.png`;
+  const iconSrc = topic.id === 'sports' ? `/icons/${topic.id}.svg` : `/icons/${topic.id}.png`;
 
   return (
     <Link

@@ -13,15 +13,19 @@ const Home = () => {
     const fetchTopics = async () => {
       try {
         const response = await axios.get(`${API_URL}/topics`);
-        setTopics(response.data.topics);
+        if (response.data.topics && response.data.topics.length > 0) {
+          setTopics(response.data.topics);
+        } else {
+          throw new Error("No topics returned");
+        }
       } catch (err) {
         console.error("Failed to fetch topics:", err);
         setTopics([
           { id: "politics", label: "US Politics", emoji: "🇺🇸", article_count: 42, last_refreshed_at: new Date().toISOString() },
+          { id: "sports", label: "Sports", emoji: "⚽", article_count: 12, last_refreshed_at: new Date().toISOString() },
           { id: "tech", label: "Tech & AI", emoji: "🤖", article_count: 28, last_refreshed_at: new Date().toISOString() },
           { id: "climate", label: "Climate Change", emoji: "🌍", article_count: 35, last_refreshed_at: new Date().toISOString() },
           { id: "economy", label: "Global Economy", emoji: "📈", article_count: 19, last_refreshed_at: new Date().toISOString() },
-          { id: "space", label: "Space Exploration", emoji: "🚀", article_count: 15, last_refreshed_at: new Date().toISOString() },
           { id: "health", label: "Health & Science", emoji: "🧬", article_count: 24, last_refreshed_at: new Date().toISOString() },
         ]);
       } finally {

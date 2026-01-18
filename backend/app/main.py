@@ -60,3 +60,5 @@ app.include_router(topics.router, tags=["topics"])
 app.include_router(research.router, tags=["research"])
 app.include_router(generate.router, tags=["generate"])
 app.include_router(voice.router, tags=["voice"])
+
+# Trigger reload
