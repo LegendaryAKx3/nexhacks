@@ -74,7 +74,8 @@ async def generate_article(payload: GenerateArticleRequest) -> ArticleResponse:
     
     title, intro, sections = await generate_article_content(
         topic=payload.topic_id,
-        research_summary=summary
+        research_summary=summary,
+        duration_minutes=payload.duration_minutes
     )
     
     return ArticleResponse(
