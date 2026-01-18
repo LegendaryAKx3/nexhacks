@@ -13,10 +13,12 @@ public class CameraSystem : MonoBehaviour
 
     private void Start()
     {
+
     }
 
     private void Update()
     {
+
     }
 
     private void SwitchCameras()
