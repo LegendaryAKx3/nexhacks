@@ -6,16 +6,19 @@ from app.models.schemas import (
     GenerateArticleRequest,
     GeneratePodcastRequest,
     GenerateScriptRequest,
+    GenerateVideoScriptRequest,
     InterruptRequest,
     InterruptResponse,
     PodcastResponse,
     ScriptResponse,
+    VideoScriptResponse,
 )
 from app.services.research import get_research_result, normalize_research_summary
 from app.services.llm import (
     generate_script_content,
     generate_article_content,
     generate_podcast_script,
+    generate_video_script_content,
 )
 from app.services.voice.elevenlabs import generate_voice
 import base64
@@ -110,11 +113,18 @@ async def generate_podcast(payload: GeneratePodcastRequest) -> PodcastResponse:
     )
 
     script_text = "\n\n".join([seg.text for seg in segments])
-    voice_id = os.getenv("ELEVENLABS_PODCAST_VOICE_ID", "").strip()
+    voice_id = (
+        os.getenv("ELEVENLABS_PODCAST_VOICE_ID", "").strip()
+        or os.getenv("VOICE_PETER_GRIFFIN", "").strip()
+        or os.getenv("VOICE_STEWIE_GRIFFIN", "").strip()
+    )
     if not voice_id:
         raise HTTPException(
             status_code=500,
-            detail="ELEVENLABS_PODCAST_VOICE_ID is not configured",
+            detail=(
+                "ELEVENLABS_PODCAST_VOICE_ID is not configured. "
+                "Set it or provide VOICE_PETER_GRIFFIN/VOICE_STEWIE_GRIFFIN."
+            ),
         )
 
     audio_bytes, mime_type = await generate_voice(script_text, voice_id)
@@ -128,6 +138,20 @@ async def generate_podcast(payload: GeneratePodcastRequest) -> PodcastResponse:
         audio_base64=audio_base64,
         mime_type=mime_type,
         total_duration_seconds=int(total_duration),
+    )
+
+
+@router.post("/generate/video-script", response_model=VideoScriptResponse)
+async def generate_video_script(
+    payload: GenerateVideoScriptRequest,
+) -> VideoScriptResponse:
+    script_text = await generate_video_script_content(
+        article_title=payload.article_title,
+        article_text=payload.article_text,
+    )
+    return VideoScriptResponse(
+        script_id=str(uuid.uuid4()),
+        script_text=script_text,
     )
 
 

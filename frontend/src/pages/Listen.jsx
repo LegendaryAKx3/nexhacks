@@ -8,11 +8,11 @@ import "./ContentPage.css";
 
 const Listen = () => {
   const { contentId } = useParams();
-  const [showQuestion, setShowQuestion] = useState(false);
-  const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(true);
   const [scriptData, setScriptData] = useState(null);
   const [audioUrl, setAudioUrl] = useState("");
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
 
   useEffect(() => {
     const generateScript = async () => {
@@ -62,19 +62,17 @@ const Listen = () => {
     };
   }, [audioUrl]);
 
-  const handleInterrupt = (currentTime) => {
-    setShowQuestion(true);
-  };
-
-  const handleAskQuestion = () => {
-    console.log("Question asked:", question);
-    setQuestion("");
-    setShowQuestion(false);
-  };
-
   if (loading) {
      return <LoadingSpinner size="large" text="Generating Script..." />;
   }
+
+  const segments = scriptData?.segments || [];
+  const currentSegment = segments.find(
+    (segment) =>
+      currentTimeSec >= segment.start_seconds &&
+      currentTimeSec < segment.end_seconds
+  );
+  const transcriptSegments = currentSegment ? [currentSegment] : segments;
 
   return (
     <div className="content-page">
@@ -94,51 +92,41 @@ const Listen = () => {
         type="audio"
         title="News Podcast"
         description="Listen to an engaging discussion of the key stories"
-        onInterrupt={handleInterrupt}
+        audioSrc={audioUrl}
+        onTimeUpdate={(time) => setCurrentTimeSec(time)}
       />
-
-      {audioUrl ? (
-        <div style={{ marginTop: 16 }}>
-          <audio controls src={audioUrl} style={{ width: "100%" }} />
-        </div>
-      ) : null}
 
       {scriptData && (
         <div className="transcript-section">
-          <h3>Transcript</h3>
-          <div className="transcript-container">
-            {scriptData.segments.map((segment, idx) => (
-              <div key={idx} className="transcript-segment">
-                <strong>{segment.speaker}: </strong>
-                <span>{segment.text}</span>
-              </div>
-            ))}
+          <div className="transcript-header">
+            <h3>Transcript</h3>
+            <button
+              className="btn btn--outline"
+              onClick={() => setShowTranscript((prev) => !prev)}
+            >
+              {showTranscript ? "Hide" : "Show"}
+            </button>
           </div>
+          {showTranscript ? (
+            <div className="transcript-container">
+              {transcriptSegments.map((segment, idx) => (
+                <div key={idx} className="transcript-segment">
+                  <strong>{segment.speaker}: </strong>
+                  <span>{segment.text}</span>
+                </div>
+              ))}
+              {currentSegment ? (
+                <div className="transcript-note">Showing current segment.</div>
+              ) : null}
+            </div>
+          ) : (
+            <p className="transcript-collapsed">
+              Transcript is hidden. Use “Show” to view the current segment.
+            </p>
+          )}
         </div>
       )}
 
-      {showQuestion && (
-        <div className="question-modal">
-          <div className="question-modal__content card">
-            <h3>Ask a Question</h3>
-            <p>Pause the podcast and get an answer in the same voice.</p>
-            <textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="What would you like clarified?"
-              rows={3}
-            />
-            <div className="question-modal__actions">
-              <button className="btn btn-ghost" onClick={() => setShowQuestion(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleAskQuestion}>
-                Ask
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
