@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -31,7 +32,10 @@ def _get_cors_origins() -> list[str]:
 
 
 if load_dotenv is not None:
-    load_dotenv()
+    backend_dir = Path(__file__).resolve().parents[1]
+    repo_root = backend_dir.parent
+    load_dotenv(repo_root / ".env")
+    load_dotenv(backend_dir / ".env")
 
 app = FastAPI(title="DeepResearchPod API")
 

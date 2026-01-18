@@ -12,6 +12,7 @@ from app.services.parallel_ai import run_task
 
 TASK_COLLECTION = "research_tasks"
 RESEARCH_COLLECTION = "research"
+_in_memory_tasks: Dict[str, Dict[str, Any]] = {}
 
 
 def _tasks_collection():
@@ -37,22 +38,40 @@ async def create_research_task(topic_id: str, query: str) -> str:
                 "updated_at": now,
             }
         )
-    except ServerSelectionTimeoutError as exc:
-        raise RuntimeError(
-            "MongoDB connection failed. Check MONGODB_URI, network access, and Atlas IP allowlist."
-        ) from exc
+    except ServerSelectionTimeoutError:
+        _in_memory_tasks[task_id] = {
+            "_id": task_id,
+            "task_id": task_id,
+            "topic_id": topic_id,
+            "query": query,
+            "status": "queued",
+            "created_at": now,
+            "updated_at": now,
+            "storage": "memory",
+        }
     except PyMongoError as exc:
         raise RuntimeError(f"MongoDB error: {exc}") from exc
     return task_id
 
 
 async def get_research_task(task_id: str) -> Optional[Dict[str, Any]]:
-    return await _tasks_collection().find_one({"_id": task_id})
+    if task_id in _in_memory_tasks:
+        return _in_memory_tasks.get(task_id)
+    try:
+        return await _tasks_collection().find_one({"_id": task_id})
+    except ServerSelectionTimeoutError:
+        return _in_memory_tasks.get(task_id)
 
 
 async def update_research_task(task_id: str, updates: Dict[str, Any]) -> None:
     updates["updated_at"] = datetime.now(timezone.utc)
-    await _tasks_collection().update_one({"_id": task_id}, {"$set": updates})
+    if task_id in _in_memory_tasks:
+        _in_memory_tasks[task_id].update(updates)
+        return
+    try:
+        await _tasks_collection().update_one({"_id": task_id}, {"$set": updates})
+    except ServerSelectionTimeoutError:
+        _in_memory_tasks[task_id] = {"_id": task_id, **updates, "storage": "memory"}
 
 
 async def run_research_task(task_id: str) -> None:
@@ -69,19 +88,21 @@ async def run_research_task(task_id: str) -> None:
         result: ResearchResult = await run_task(query)
         summary = result.summary or ""
         sources = [source.model_dump() for source in result.sources]
-
-        await _research_collection().update_one(
-            {"topic_id": topic_id},
-            {
-                "$set": {
-                    "topic_id": topic_id,
-                    "summary": summary,
-                    "sources": sources,
-                    "generated_at": datetime.now(timezone.utc),
-                }
-            },
-            upsert=True,
-        )
+        try:
+            await _research_collection().update_one(
+                {"topic_id": topic_id},
+                {
+                    "$set": {
+                        "topic_id": topic_id,
+                        "summary": summary,
+                        "sources": sources,
+                        "generated_at": datetime.now(timezone.utc),
+                    }
+                },
+                upsert=True,
+            )
+        except ServerSelectionTimeoutError:
+            pass
 
         await update_research_task(
             task_id,
@@ -102,7 +123,10 @@ async def run_research_task(task_id: str) -> None:
 
 
 async def get_research_result(topic_id: str) -> Optional[Dict[str, Any]]:
-    return await _research_collection().find_one({"topic_id": topic_id})
+    try:
+        return await _research_collection().find_one({"topic_id": topic_id})
+    except ServerSelectionTimeoutError:
+        return None
 
 
 async def synthesize_research(topic_id: str, sources: List[Source]) -> str:
