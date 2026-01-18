@@ -13,26 +13,7 @@ const Layout = ({ children }) => {
                         <span className="logo-text">DeepResearchPod</span>
                     </Link>
 
-                    <nav className="nav">
-                        <Link
-                            to="/"
-                            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-                        >
-                            Topics
-                        </Link>
-                        <Link
-                            to="/research"
-                            className={`nav-link ${location.pathname === '/research' ? 'active' : ''}`}
-                        >
-                            Research
-                        </Link>
-                        <Link
-                            to="/agents"
-                            className={`nav-link ${location.pathname === '/agents' ? 'active' : ''}`}
-                        >
-                            Agents
-                        </Link>
-                    </nav>
+                    <nav className="nav" />
                 </div>
             </header>
 
