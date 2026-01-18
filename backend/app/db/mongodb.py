@@ -24,13 +24,13 @@ from typing import Any, Dict, List, Optional
 
 
 # def get_database():
-#     db_name = os.getenv("MONGODB_DB", "deepresearchpod")
+#     db_name = os.getenv("MONGODB_DB", "genznews")
 #     return get_client()[db_name]
 
 
 # --- Local JSON File Storage Implementation ---
 
-DB_FILE = Path("local_data.json")
+DB_FILE = Path(__file__).resolve().parents[2] / "local_data.json"
 
 class LocalJsonCollection:
     def __init__(self, name: str, db_file: Path):

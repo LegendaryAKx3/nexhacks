@@ -8,10 +8,11 @@ import "./ContentPage.css";
 
 const Listen = () => {
   const { contentId } = useParams();
-  const [showQuestion, setShowQuestion] = useState(false);
-  const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(true);
   const [scriptData, setScriptData] = useState(null);
+  const [audioUrl, setAudioUrl] = useState("");
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
 
   useEffect(() => {
     const generateScript = async () => {
@@ -20,16 +21,27 @@ const Listen = () => {
         // contentId format: "topicId_format_duration"
         const parts = contentId.split("_");
         const topicId = parts[0];
-        const format = parts[1] || "podcast";
         const duration = parseInt(parts[2], 10) || 5;
 
-        const response = await axios.post(`${API_URL}/generate/script`, {
+        const response = await axios.post(`${API_URL}/generate/podcast`, {
           topic_id: topicId,
           duration_minutes: duration,
-          format: format
         });
 
         setScriptData(response.data);
+        if (response.data?.audio_base64) {
+          const byteCharacters = atob(response.data.audio_base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i += 1) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], {
+            type: response.data?.mime_type || "audio/mpeg",
+          });
+          const url = URL.createObjectURL(blob);
+          setAudioUrl(url);
+        }
       } catch (err) {
         console.error("Failed to generate script:", err);
       } finally {
@@ -42,19 +54,25 @@ const Listen = () => {
     }
   }, [contentId]);
 
-  const handleInterrupt = (currentTime) => {
-    setShowQuestion(true);
-  };
-
-  const handleAskQuestion = () => {
-    console.log("Question asked:", question);
-    setQuestion("");
-    setShowQuestion(false);
-  };
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   if (loading) {
      return <LoadingSpinner size="large" text="Generating Script..." />;
   }
+
+  const segments = scriptData?.segments || [];
+  const currentSegment = segments.find(
+    (segment) =>
+      currentTimeSec >= segment.start_seconds &&
+      currentTimeSec < segment.end_seconds
+  );
+  const transcriptSegments = currentSegment ? [currentSegment] : segments;
 
   return (
     <div className="content-page">
@@ -74,45 +92,41 @@ const Listen = () => {
         type="audio"
         title="News Podcast"
         description="Listen to an engaging discussion of the key stories"
-        onInterrupt={handleInterrupt}
+        audioSrc={audioUrl}
+        onTimeUpdate={(time) => setCurrentTimeSec(time)}
       />
 
       {scriptData && (
         <div className="transcript-section">
-          <h3>Transcript</h3>
-          <div className="transcript-container">
-            {scriptData.segments.map((segment, idx) => (
-              <div key={idx} className="transcript-segment">
-                <strong>{segment.speaker}: </strong>
-                <span>{segment.text}</span>
-              </div>
-            ))}
+          <div className="transcript-header">
+            <h3>Transcript</h3>
+            <button
+              className="btn btn--outline"
+              onClick={() => setShowTranscript((prev) => !prev)}
+            >
+              {showTranscript ? "Hide" : "Show"}
+            </button>
           </div>
+          {showTranscript ? (
+            <div className="transcript-container">
+              {transcriptSegments.map((segment, idx) => (
+                <div key={idx} className="transcript-segment">
+                  <strong>{segment.speaker}: </strong>
+                  <span>{segment.text}</span>
+                </div>
+              ))}
+              {currentSegment ? (
+                <div className="transcript-note">Showing current segment.</div>
+              ) : null}
+            </div>
+          ) : (
+            <p className="transcript-collapsed">
+              Transcript is hidden. Use “Show” to view the current segment.
+            </p>
+          )}
         </div>
       )}
 
-      {showQuestion && (
-        <div className="question-modal">
-          <div className="question-modal__content card">
-            <h3>Ask a Question</h3>
-            <p>Pause the podcast and get an answer in the same voice.</p>
-            <textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="What would you like clarified?"
-              rows={3}
-            />
-            <div className="question-modal__actions">
-              <button className="btn btn-ghost" onClick={() => setShowQuestion(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleAskQuestion}>
-                Ask
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -143,3 +143,53 @@
     font-size: var(--text-sm);
     font-weight: 600;
 }
+
+/* Transcript */
+.transcript-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    border: 1px solid var(--color-graphite);
+    padding: var(--space-lg);
+    background: var(--color-charcoal);
+}
+
+.transcript-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.transcript-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    border-top: 1px solid var(--color-graphite);
+    padding-top: var(--space-md);
+}
+
+.transcript-segment {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--color-cream);
+    line-height: 1.6;
+}
+
+.transcript-segment strong {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.transcript-note {
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    color: var(--color-slate);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.transcript-collapsed {
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    color: var(--color-slate);
+}

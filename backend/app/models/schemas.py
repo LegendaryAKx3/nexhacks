@@ -54,6 +54,19 @@ class ScriptResponse(BaseModel):
     total_duration_seconds: int
 
 
+class GeneratePodcastRequest(BaseModel):
+    topic_id: str
+    duration_minutes: int
+
+
+class PodcastResponse(BaseModel):
+    podcast_id: str
+    segments: List[ScriptSegment]
+    audio_base64: str
+    mime_type: str
+    total_duration_seconds: int
+
+
 class InterruptRequest(BaseModel):
     script_id: str
     current_position_seconds: int
@@ -81,6 +94,16 @@ class ArticleResponse(BaseModel):
     title: str
     content: str
     sections: List[ArticleSection]
+
+
+class GenerateVideoScriptRequest(BaseModel):
+    article_title: Optional[str] = None
+    article_text: str
+
+
+class VideoScriptResponse(BaseModel):
+    script_id: str
+    script_text: str
 
 
 class ResearchRefreshRequest(BaseModel):

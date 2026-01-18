@@ -1,41 +1,117 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./MediaPlayer.css";
 
-const MediaPlayer = ({ 
-  type = "audio", 
-  title, 
+const MediaPlayer = ({
+  type = "audio",
+  title,
   description,
-  onInterrupt 
+  audioSrc,
+  onTimeUpdate,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const totalDuration = 600; // 10 minutes in seconds
+  const [totalDuration, setTotalDuration] = useState(0);
+  const audioRef = useRef(null);
+  const rafRef = useRef(null);
 
   const formatTime = (seconds) => {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return "0:00";
+    }
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-    // In a real implementation, this would control actual playback
+  const togglePlay = async () => {
+    if (!audioRef.current || !audioSrc) {
+      setIsPlaying((prev) => !prev);
+      return;
+    }
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      try {
+        await audioRef.current.play();
+      } catch (err) {
+        return;
+      }
+    }
   };
 
   const handleSeek = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
-    setProgress(percent * 100);
-    setCurrentTime(percent * totalDuration);
-  };
-
-  const handleInterrupt = () => {
-    setIsPlaying(false);
-    if (onInterrupt) {
-      onInterrupt(currentTime);
+    if (audioRef.current && totalDuration > 0) {
+      audioRef.current.currentTime = percent * totalDuration;
     }
   };
+
+  const handleSkip = (delta) => {
+    if (!audioRef.current || totalDuration <= 0) return;
+    const nextTime = Math.min(
+      Math.max(audioRef.current.currentTime + delta, 0),
+      totalDuration
+    );
+    audioRef.current.currentTime = nextTime;
+  };
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+    const handleTimeUpdate = () => {
+      const time = audio.currentTime || 0;
+      const duration = audio.duration || 0;
+      setCurrentTime(time);
+      setTotalDuration(duration);
+      setProgress(duration ? (time / duration) * 100 : 0);
+      if (onTimeUpdate) {
+        onTimeUpdate(time, duration);
+      }
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    const startRaf = () => {
+      if (rafRef.current) return;
+      const tick = () => {
+        handleTimeUpdate();
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    const stopRaf = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("loadedmetadata", handleTimeUpdate);
+    audio.addEventListener("play", () => {
+      handlePlay();
+      startRaf();
+    });
+    audio.addEventListener("pause", () => {
+      handlePause();
+      stopRaf();
+    });
+    audio.addEventListener("ended", () => {
+      handlePause();
+      stopRaf();
+    });
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("loadedmetadata", handleTimeUpdate);
+      stopRaf();
+    };
+  }, [audioSrc, onTimeUpdate]);
 
   return (
     <div className="media-player card">
@@ -51,6 +127,7 @@ const MediaPlayer = ({
 
       {type === "audio" && (
         <div className="audio-visualization">
+          <audio ref={audioRef} src={audioSrc || ""} preload="metadata" />
           <div className="waveform">
             {Array.from({ length: 50 }).map((_, i) => (
               <div 
@@ -83,13 +160,22 @@ const MediaPlayer = ({
         </div>
 
         <div className="control-buttons">
-          <button className="control-btn" title="Rewind 15s">
+          <button
+            className="control-btn"
+            title="Rewind 15s"
+            onClick={() => handleSkip(-15)}
+            disabled={!audioSrc}
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
             </svg>
           </button>
 
-          <button className="control-btn control-btn--play" onClick={togglePlay}>
+          <button
+            className="control-btn control-btn--play"
+            onClick={togglePlay}
+            disabled={!audioSrc}
+          >
             {isPlaying ? (
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16" rx="1" />
@@ -102,20 +188,17 @@ const MediaPlayer = ({
             )}
           </button>
 
-          <button className="control-btn" title="Forward 15s">
+          <button
+            className="control-btn"
+            title="Forward 15s"
+            onClick={() => handleSkip(15)}
+            disabled={!audioSrc}
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M23 4v6h-6M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
             </svg>
           </button>
         </div>
-
-        <button className="interrupt-btn btn btn-secondary" onClick={handleInterrupt}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4M12 8h.01" />
-          </svg>
-          Ask a Question
-        </button>
       </div>
     </div>
   );

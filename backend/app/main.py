@@ -37,7 +37,7 @@ def _get_cors_origins() -> list[str]:
     return origins
 
 
-app = FastAPI(title="DeepResearchPod API")
+app = FastAPI(title="GENzNEWS API")
 
 origins = _get_cors_origins()
 if origins:
