@@ -2,9 +2,12 @@ import os
 import json
 import asyncio
 import re
+import logging
 from typing import List, Optional
 import google.generativeai as genai
 from app.models.schemas import ScriptSegment, ArticleSection
+
+_logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite-preview-02-05")
@@ -12,17 +15,70 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite-preview-02-05")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
+def fix_double_encoded_utf8(text: str) -> str:
+    """Fix double-encoded UTF-8 text (e.g., em dash showing as garbled characters instead of '—').
+    
+    When UTF-8 bytes are incorrectly decoded as Latin-1/CP1252, multi-byte characters become
+    sequences of Latin-1 characters. This function uses regex to find and fix these patterns
+    while preserving valid Unicode characters in the text.
+    """
+    if not text:
+        return text
+    
+    def fix_utf8_sequence(match):
+        """Fix a single corrupted 3-byte UTF-8 sequence."""
+        try:
+            # Get the 3 characters that represent the corrupted UTF-8 bytes
+            chars = match.group(0)
+            # Encode to latin-1 to get the original bytes, then decode as UTF-8
+            return chars.encode('latin-1').decode('utf-8')
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            return match.group(0)  # Return original if fix fails
+    
+    # Pattern to match 3-byte UTF-8 sequences that were decoded as Latin-1
+    # First byte: 0xE0-0xEF (in Latin-1: à-ï, but we focus on common ones)
+    # Second & third bytes: 0x80-0xBF (in Latin-1: control chars + special)
+    # Common pattern for corrupted UTF-8: starts with â (0xE2) followed by €/€ (0x80) and other chars
+    pattern = r'[\u00e0-\u00ef][\u0080-\u00bf][\u0080-\u00bf]'
+    
+    fixed = re.sub(pattern, fix_utf8_sequence, text)
+    
+    # Also fix 2-byte sequences (for characters like ©, ®, etc.)
+    pattern_2byte = r'[\u00c2-\u00df][\u0080-\u00bf]'
+    fixed = re.sub(pattern_2byte, fix_utf8_sequence, fixed)
+    
+    return fixed
+
 def clean_markdown(text: str) -> str:
-    """Remove common markdown formatting symbols."""
+    """Remove common markdown formatting symbols and fix encoding issues."""
+    # First, try to fix double-encoded UTF-8
+    text = fix_double_encoded_utf8(text)
+    
+    # Convert escaped newlines to actual newlines for consistent processing
+    text = text.replace('\\n', '\n')
+    
     # Remove bold markers
     text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
     text = re.sub(r'__(.*?)__', r'\1', text)
-    # Remove header symbols (only at start of line)
+    
+    # Remove header symbols (## Header -> Header)
     text = re.sub(r'(^|\n)#+\s*', r'\1', text)
+    
     # Remove horizontal rules
-    text = re.sub(r'(^|\n)---\s*(\n|$)', r'\1', text)
-    # Remove list markers if they look like markdown lists
-    text = re.sub(r'(^|\n)[\s]*[\*\-]\s+', r'\1', text)
+    text = re.sub(r'(^|\n)---+\s*(\n|$)', r'\1', text)
+    
+    # Remove list markers (* item or - item -> item)
+    text = re.sub(r'(^|\n)\s*[\*\-]\s+', r'\1• ', text)
+    
+    # Remove reference-style link markers [1], [2], etc.
+    text = re.sub(r'\s*\[\d+\]', '', text)
+    
+    # Collapse multiple newlines into double newlines (paragraph breaks)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # Collapse multiple spaces
+    text = re.sub(r' {2,}', ' ', text)
+    
     return text.strip()
 
 async def generate_script_content(

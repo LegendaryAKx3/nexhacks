@@ -29,26 +29,39 @@ def parse_task_output(text: str) -> tuple[str, list[Source]]:
     content_match = re.search(r"""content=(['"])(.*?)\1(?:,\s*[a-zA-Z_]\w*=|\)$)""", text, re.DOTALL)
     if content_match:
         raw_content = content_match.group(2)
-        try:
-            # Best effort decode
-            summary = raw_content.encode('utf-8').decode('unicode_escape')
-        except:
-            summary = raw_content
+        # Use raw content directly - unicode_escape corrupts UTF-8 multi-byte chars
+        summary = raw_content
     
-    # 2. Extract citations
-    # Pattern: Citation(url='...', excerpts=[...], title='...')
-    # We use findall. 
-    citation_pattern = re.compile(r"Citation\(url='(.*?)', excerpts=\[.*?\], title='(.*?)'\)")
-    matches = citation_pattern.findall(text)
+    # 2. Extract citations - try multiple patterns to handle different orderings
+    # Find all Citation(...) blocks first
+    citation_blocks = re.findall(r"Citation\([^)]+\)", text)
     
-    for url, title in matches:
-        sources.append(Source(
-            title=title,
-            url=url,
-            source_name="", 
-            snippet="",
-            published_at=None
-        ))
+    for block in citation_blocks:
+        # Extract url and title from each Citation block (flexible field ordering)
+        url_match = re.search(r"url=['\"]([^'\"]+)['\"]", block)
+        title_match = re.search(r"title=['\"]([^'\"]+)['\"]", block)
+        
+        if url_match:
+            sources.append(Source(
+                title=title_match.group(1) if title_match else "Source",
+                url=url_match.group(1),
+                source_name="", 
+                snippet="",
+                published_at=None
+            ))
+    
+    # Fallback: try the original strict pattern if no sources found
+    if not sources:
+        citation_pattern = re.compile(r"Citation\(url='(.*?)', excerpts=\[.*?\], title='(.*?)'\)")
+        matches = citation_pattern.findall(text)
+        for url, title in matches:
+            sources.append(Source(
+                title=title,
+                url=url,
+                source_name="", 
+                snippet="",
+                published_at=None
+            ))
         
     return summary, sources
 
@@ -157,7 +170,19 @@ async def get_topic(topic_id: str) -> TopicDetailResponse:
         # Check for explicit sources in DB (preferred if available)
         db_sources = research.get("sources", [])
         if db_sources:
-            real_sources = db_sources
+            # Convert dict sources from DB to Source objects
+            real_sources = []
+            for s in db_sources:
+                if isinstance(s, dict):
+                    real_sources.append(Source(
+                        title=s.get("title", "Source"),
+                        url=s.get("url", ""),
+                        snippet=s.get("snippet"),
+                        source_name=s.get("source_name"),
+                        published_at=s.get("published_at"),
+                    ))
+                elif isinstance(s, Source):
+                    real_sources.append(s)
 
     return TopicDetailResponse(
         id=topic_id,

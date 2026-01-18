@@ -119,7 +119,28 @@ async def run_task(
                 summary = output.get("summary") or output.get("answer") or ""
                 sources = _normalize_sources(output.get("sources") or output.get("results"))
             else:
-                summary = str(output) if output is not None else ""
+                # Handle TaskRunTextOutput or similar objects with content/citations
+                content = getattr(output, "content", None)
+                citations = getattr(output, "citations", None)
+                
+                if content is not None:
+                    summary = str(content)
+                else:
+                    summary = str(output) if output is not None else ""
+                
+                # Extract sources from citations if available
+                if citations and isinstance(citations, list):
+                    for citation in citations:
+                        url = getattr(citation, "url", None) or (citation.get("url") if isinstance(citation, dict) else None)
+                        title = getattr(citation, "title", None) or (citation.get("title") if isinstance(citation, dict) else None)
+                        if url:
+                            sources.append(Source(
+                                title=title or "Source",
+                                url=url,
+                                snippet=None,
+                                source_name=None,
+                                published_at=None,
+                            ))
 
             _logger.info("Task %s completed successfully with %d sources", run_id, len(sources))
             return ResearchResult(summary=summary, sources=sources)

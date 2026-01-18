@@ -146,10 +146,8 @@ def normalize_research_summary(summary: str) -> str:
                     end = summary.rfind(quote)
                 if end > start:
                     extracted = summary[start:end]
-                    try:
-                        return extracted.encode("utf-8").decode("unicode_escape")
-                    except Exception:
-                        return extracted
+                    # Return directly - unicode_escape corrupts UTF-8 multi-byte chars
+                    return extracted
 
     cleaned = re.sub(r"^TaskRunTextOutput\\(.*?content=", "", summary, flags=re.DOTALL)
     return cleaned.strip()
