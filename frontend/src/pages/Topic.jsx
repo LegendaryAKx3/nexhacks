@@ -59,7 +59,7 @@ const Topic = () => {
     setGenerating(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const contentId = `${id}_${selectedFormat}_${selectedDuration}`;
       if (selectedFormat === "watch") {

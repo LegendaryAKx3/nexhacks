@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_URL } from "../config.js";
 import TopicCard from "../components/TopicCard.jsx";
-import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import "./Home.css";
 
+const DEFAULT_TOPICS = [
+  { id: "politics", label: "US Politics", emoji: "🇺🇸", article_count: 42, last_refreshed_at: new Date().toISOString() },
+  { id: "sports", label: "Sports", emoji: "⚽", article_count: 12, last_refreshed_at: new Date().toISOString() },
+  { id: "tech", label: "Tech & AI", emoji: "🤖", article_count: 28, last_refreshed_at: new Date().toISOString() },
+  { id: "climate", label: "Climate Change", emoji: "🌍", article_count: 35, last_refreshed_at: new Date().toISOString() },
+  { id: "economy", label: "Global Economy", emoji: "📈", article_count: 19, last_refreshed_at: new Date().toISOString() },
+  { id: "health", label: "Health & Science", emoji: "🧬", article_count: 24, last_refreshed_at: new Date().toISOString() },
+];
+
 const Home = () => {
-  const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [topics, setTopics] = useState(DEFAULT_TOPICS);
 
   useEffect(() => {
     const fetchTopics = async () => {
@@ -15,30 +22,15 @@ const Home = () => {
         const response = await axios.get(`${API_URL}/topics`);
         if (response.data.topics && response.data.topics.length > 0) {
           setTopics(response.data.topics);
-        } else {
-          throw new Error("No topics returned");
         }
       } catch (err) {
         console.error("Failed to fetch topics:", err);
-        setTopics([
-          { id: "politics", label: "US Politics", emoji: "🇺🇸", article_count: 42, last_refreshed_at: new Date().toISOString() },
-          { id: "sports", label: "Sports", emoji: "⚽", article_count: 12, last_refreshed_at: new Date().toISOString() },
-          { id: "tech", label: "Tech & AI", emoji: "🤖", article_count: 28, last_refreshed_at: new Date().toISOString() },
-          { id: "climate", label: "Climate Change", emoji: "🌍", article_count: 35, last_refreshed_at: new Date().toISOString() },
-          { id: "economy", label: "Global Economy", emoji: "📈", article_count: 19, last_refreshed_at: new Date().toISOString() },
-          { id: "health", label: "Health & Science", emoji: "🧬", article_count: 24, last_refreshed_at: new Date().toISOString() },
-        ]);
-      } finally {
-        setLoading(false);
+        // Keep default topics on error
       }
     };
 
     fetchTopics();
   }, []);
-
-  if (loading) {
-    return <LoadingSpinner size="large" text="Loading..." />;
-  }
 
   return (
     <div className="home">
