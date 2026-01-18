@@ -1408,6 +1408,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraSystem
   camera1: {fileID: 744770475}
   camera2: {fileID: 1757930654}
+--- !u!1 &1114515247
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1114515248}
+  m_Layer: 0
+  m_Name: Podcast
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1114515248
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1114515247}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.62638, y: 0, z: -1.06977}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1118828926
 GameObject:
   m_ObjectHideFlags: 0
@@ -2236,6 +2267,151 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1477698602}
   m_Mesh: {fileID: 5236547696429784970, guid: 84b5a36fd280c544db96f4f574a6b2f9, type: 3}
+--- !u!1 &1568381182
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1568381183}
+  - component: {fileID: 1568381184}
+  - component: {fileID: 1568381185}
+  m_Layer: 0
+  m_Name: LiveKit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1568381183
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568381182}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.1, z: -3.95}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1568381184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568381182}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d109253ce76d58a4381eb1103d515814, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LiveKitComms
+  livekitUrl: ws://localhost:7880
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Njg3MTg4NTIsImlkZW50aXR5IjoidXNlcjEiLCJpc3MiOiJkZXZrZXkiLCJuYW1lIjoidXNlcjEiLCJuYmYiOjE3Njg3MTg1NTIsInN1YiI6InVzZXIxIiwidmlkZW8iOnsicm9vbSI6Im15LXJvb20iLCJyb29tSm9pbiI6dHJ1ZX19.I6UAI9JP9T17Hs8uQS-GHpTaGeVwUBWjZWQGTqhhvY4
+  targetAudioSource: {fileID: 1568381185}
+--- !u!82 &1568381185
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568381182}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1569533637
 GameObject:
   m_ObjectHideFlags: 0
@@ -2326,6 +2502,78 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1569533637}
   m_Mesh: {fileID: 7633963203421271098, guid: 84b5a36fd280c544db96f4f574a6b2f9, type: 3}
+--- !u!1 &1633695445
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1633695447}
+  - component: {fileID: 1633695446}
+  m_Layer: 0
+  m_Name: ElevenLabs
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1633695446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1633695445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74075bb525e313846bc555af9ff8384d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PodcastElevenLabs
+  characters:
+  - name: Peter
+    animator: {fileID: 352575532}
+    audioSource: {fileID: 352575533}
+    voiceId: LOuPVoWGVUYUKSa5whXT
+  - name: Stewie
+    animator: {fileID: 388045247}
+    audioSource: {fileID: 388045248}
+    voiceId: 3PAunRGaXfWWP9vGsrAq
+  podcastScript: "[Stewie - talk]\nWelcome back to our very serious podcast where
+    we absolutely know what we\u2019re talking about. Today\u2019s topic: oil prices
+    in Venezuela, a country with enormous oil reserves and a very complicated economic
+    situation.\n[Stewie - idle]\n\n[Peter - talk]\nYeah, and it\u2019s wild, because
+    you hear \u201Chuge oil reserves\u201D and think everyone\u2019s swimming in
+    money, but instead it\u2019s more like the oil is there, and the money\u2026
+    took a vacation.\n[Peter - idle]\n\n[Stewie - talk]\nPrecisely. Venezuela has
+    some of the largest proven oil reserves in the world, but production has dropped
+    a lot over the past decade due to underinvestment, sanctions, and infrastructure
+    problems.\n[Stewie - idle]\n\n[Peter - talk]\nSo basically, it\u2019s like having
+    a giant pizza in the freezer, but the oven\u2019s broken and nobody paid the
+    electric bill.\n[Peter - idle]\n\n[Stewie - talk]\nThat is a surprisingly accurate
+    analogy. When production is low, Venezuela can\u2019t fully benefit from higher
+    global oil prices, even when prices spike internationally.\n[Stewie - idle]\n\n[Peter
+    - talk]\nAnd then when oil prices go up worldwide, other countries celebrate,
+    but Venezuela\u2019s like, \u201CCool\u2026 if only we could pump more of it.\u201D\n[Peter
+    - idle]"
+  elevenLabsApiKey: sk_365dedec37a68cac9c5efca64df6629918fece67f8e6a1f0
+  modelId: eleven_multilingual_v2
+--- !u!4 &1633695447
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1633695445}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.62638, y: 0, z: -1.06977}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1711721615
 GameObject:
   m_ObjectHideFlags: 0
@@ -2607,7 +2855,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1896802694}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f900f15183a85042b1aa1a5074d16bf, type: 3}
   m_Name: 
@@ -13105,3 +13353,6 @@ SceneRoots:
   - {fileID: 1967216085}
   - {fileID: 2114685620}
   - {fileID: 1345635615}
+  - {fileID: 1568381183}
+  - {fileID: 1114515248}
+  - {fileID: 1633695447}
