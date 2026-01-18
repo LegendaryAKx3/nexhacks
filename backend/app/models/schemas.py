@@ -85,8 +85,26 @@ class ArticleResponse(BaseModel):
 
 class ResearchRefreshRequest(BaseModel):
     topic_id: str
+    query: Optional[str] = None
 
 
 class ResearchRefreshResponse(BaseModel):
     topic_id: str
     status: str
+
+
+class ResearchResult(BaseModel):
+    summary: Optional[str] = None
+    sources: List[Source] = []
+
+
+class ResearchTaskResponse(BaseModel):
+    task_id: str
+    status: str
+
+
+class ResearchTaskStatusResponse(BaseModel):
+    task_id: str
+    status: str
+    result: Optional[ResearchResult] = None
+    error: Optional[str] = None
