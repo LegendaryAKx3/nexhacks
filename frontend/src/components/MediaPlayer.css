@@ -191,6 +191,11 @@
   transition: all 0.3s ease;
 }
 
+.control-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .control-btn:hover {
   color: var(--color-cream);
   border-color: var(--color-slate);

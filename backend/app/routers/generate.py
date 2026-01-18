@@ -110,11 +110,18 @@ async def generate_podcast(payload: GeneratePodcastRequest) -> PodcastResponse:
     )
 
     script_text = "\n\n".join([seg.text for seg in segments])
-    voice_id = os.getenv("ELEVENLABS_PODCAST_VOICE_ID", "").strip()
+    voice_id = (
+        os.getenv("ELEVENLABS_PODCAST_VOICE_ID", "").strip()
+        or os.getenv("VOICE_PETER_GRIFFIN", "").strip()
+        or os.getenv("VOICE_STEWIE_GRIFFIN", "").strip()
+    )
     if not voice_id:
         raise HTTPException(
             status_code=500,
-            detail="ELEVENLABS_PODCAST_VOICE_ID is not configured",
+            detail=(
+                "ELEVENLABS_PODCAST_VOICE_ID is not configured. "
+                "Set it or provide VOICE_PETER_GRIFFIN/VOICE_STEWIE_GRIFFIN."
+            ),
         )
 
     audio_bytes, mime_type = await generate_voice(script_text, voice_id)
