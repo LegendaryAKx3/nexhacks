@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional
 
 
 # def get_database():
-#     db_name = os.getenv("MONGODB_DB", "deepresearchpod")
+#     db_name = os.getenv("MONGODB_DB", "genznews")
 #     return get_client()[db_name]
 
 

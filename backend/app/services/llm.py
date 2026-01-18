@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+import re
 from typing import List, Optional
 import google.generativeai as genai
 from app.models.schemas import ScriptSegment, ArticleSection
@@ -10,6 +11,19 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite-preview-02-05")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
+
+def clean_markdown(text: str) -> str:
+    """Remove common markdown formatting symbols."""
+    # Remove bold markers
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+    text = re.sub(r'__(.*?)__', r'\1', text)
+    # Remove header symbols (only at start of line)
+    text = re.sub(r'(^|\n)#+\s*', r'\1', text)
+    # Remove horizontal rules
+    text = re.sub(r'(^|\n)---\s*(\n|$)', r'\1', text)
+    # Remove list markers if they look like markdown lists
+    text = re.sub(r'(^|\n)[\s]*[\*\-]\s+', r'\1', text)
+    return text.strip()
 
 async def generate_script_content(
     topic: str,
@@ -78,7 +92,7 @@ async def generate_script_content(
             duration = seg.get("estimated_duration", 5)
             segments.append(ScriptSegment(
                 speaker=seg.get("speaker", "Host"),
-                text=seg.get("text", ""),
+                text=clean_markdown(seg.get("text", "")),
                 start_seconds=current_time,
                 end_seconds=current_time + duration
             ))
@@ -99,7 +113,8 @@ async def generate_script_content(
 
 async def generate_article_content(
     topic: str,
-    research_summary: str
+    research_summary: str,
+    duration_minutes: int = 2
 ) -> tuple[str, str, List[ArticleSection]]:
     if not GEMINI_API_KEY:
         return (
@@ -108,14 +123,25 @@ async def generate_article_content(
             []
         )
 
+    # Average reading rate ~200 words per minute
+    target_word_count = duration_minutes * 200
+
     prompt = f"""
     You are an expert journalist.
     Topic: {topic}
+    Target Duration: {duration_minutes} minutes.
+    Target Word Count: Approximately {target_word_count} words total.
     
     Research Material:
     {research_summary}
     
     Write a comprehensive article based on the research.
+    
+    IMPORTANT:
+    1. The article MUST be concise enough to be read in {duration_minutes} minutes.
+    2. The total word count (intro + all sections) should be close to {target_word_count} words.
+    3. Do NOT exceed the target length significantly.
+    4. Do NOT use Markdown formatting symbols like ##, **, or __ in the text. The structure is already provided by the JSON format. Headings should be plain text.
     
     Return the response as a valid JSON object with the following keys:
     - "title": The title of the article.
@@ -136,12 +162,15 @@ async def generate_article_content(
         
         data = json.loads(response.text)
         
-        title = data.get("title", f"Article: {topic}")
-        intro = data.get("intro", "")
+        title = clean_markdown(data.get("title", f"Article: {topic}"))
+        intro = clean_markdown(data.get("intro", ""))
         raw_sections = data.get("sections", [])
         
         sections = [
-            ArticleSection(heading=s.get("heading", ""), body=s.get("body", ""))
+            ArticleSection(
+                heading=clean_markdown(s.get("heading", "")), 
+                body=clean_markdown(s.get("body", ""))
+            )
             for s in raw_sections
         ]
         

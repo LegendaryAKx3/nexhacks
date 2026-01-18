@@ -7,3 +7,5 @@ __pycache__/
 node_modules/
 server.err
 server.log
+backend_stderr.log
+backend_stdout.log

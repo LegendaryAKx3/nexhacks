@@ -9,8 +9,8 @@ const Layout = ({ children }) => {
             <header className="header">
                 <div className="header-content container">
                     <Link to="/" className="logo">
-                        <span className="logo-mark">D</span>
-                        <span className="logo-text">DeepResearchPod</span>
+                        <span className="logo-mark">G</span>
+                        <span className="logo-text">GENzNEWS</span>
                     </Link>
 
                     <nav className="nav" />
@@ -25,7 +25,7 @@ const Layout = ({ children }) => {
 
             <footer className="footer">
                 <div className="footer-content container">
-                    <span className="footer-text">© 2026 DeepResearchPod</span>
+                    <span className="footer-text">© 2026 GENzNEWS</span>
                     <span className="footer-tagline">News, reimagined</span>
                 </div>
             </footer>

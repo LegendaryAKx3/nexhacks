@@ -21,7 +21,7 @@ def voice_config() -> dict:
     if not url:
         raise HTTPException(status_code=500, detail="LIVEKIT_URL is not configured")
 
-    room = os.getenv("LIVEKIT_ROOM", "deepresearchpod-duo")
+    room = os.getenv("LIVEKIT_ROOM", "genznews-duo")
     return {"url": url, "room": room}
 
 
@@ -34,7 +34,7 @@ def issue_token(payload: TokenRequest) -> dict:
     if not url:
         raise HTTPException(status_code=500, detail="LIVEKIT_URL is not configured")
 
-    room = payload.room or os.getenv("LIVEKIT_ROOM", "deepresearchpod-duo")
+    room = payload.room or os.getenv("LIVEKIT_ROOM", "genznews-duo")
 
     try:
         token = create_access_token(
