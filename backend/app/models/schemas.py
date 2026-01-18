@@ -96,6 +96,16 @@ class ArticleResponse(BaseModel):
     sections: List[ArticleSection]
 
 
+class GenerateVideoScriptRequest(BaseModel):
+    article_title: Optional[str] = None
+    article_text: str
+
+
+class VideoScriptResponse(BaseModel):
+    script_id: str
+    script_text: str
+
+
 class ResearchRefreshRequest(BaseModel):
     topic_id: str
     query: Optional[str] = None

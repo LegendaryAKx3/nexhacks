@@ -257,3 +257,58 @@ async def generate_podcast_script(
                 end_seconds=5,
             )
         ]
+
+
+async def generate_video_script_content(
+    article_title: str | None,
+    article_text: str,
+) -> str:
+    if not GEMINI_API_KEY:
+        title = article_title or "the news story"
+        return (
+            "[Stewie - talk]\n"
+            f"We are discussing {title}. Configure GEMINI_API_KEY for real output.\n"
+            "[Stewie - idle]\n\n"
+            "[Peter - talk]\n"
+            "Yeah, and I will keep it short until the model is set up.\n"
+            "[Peter - idle]\n"
+        )
+
+    title = article_title or "the provided news article"
+    prompt = f"""
+    You are writing a video script for a news panel with two anchors: Peter and Stewie.
+    The script must be about the given news article and alternate between the two anchors,
+    with a slight preference for Peter (he should have slightly more turns).
+
+    Article title: {title}
+    Article text:
+    {article_text}
+
+    Format requirements (must follow exactly):
+    - Each speaking turn must be wrapped in a bracketed tag line followed by the spoken text.
+    - Use the tag format: [Speaker - talk] and [Speaker - idle]
+    - After each spoken block, include a corresponding [Speaker - idle] line.
+    - Separate each block with a blank line.
+
+    Example:
+    [Stewie - talk]
+    Sentence...
+    [Stewie - idle]
+
+    [Peter - talk]
+    Sentence...
+    [Peter - idle]
+
+    Return only the formatted script with no extra commentary, no JSON, and no markdown.
+    """
+
+    try:
+        model = genai.GenerativeModel(GEMINI_MODEL)
+        response = await model.generate_content_async(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return (
+            "[Stewie - talk]\n"
+            f"Error generating script: {str(e)}\n"
+            "[Stewie - idle]\n"
+        )
