@@ -7,3 +7,4 @@ httpx
 pydantic
 python-dotenv
 livekit-api
+parallel-web

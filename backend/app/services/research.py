@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from app.db.mongodb import get_database
+from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 from app.models.schemas import ResearchResult, Source
 from app.services.parallel_ai import run_task
 
@@ -24,17 +25,24 @@ def _research_collection():
 async def create_research_task(topic_id: str, query: str) -> str:
     task_id = str(uuid4())
     now = datetime.now(timezone.utc)
-    await _tasks_collection().insert_one(
-        {
-            "_id": task_id,
-            "task_id": task_id,
-            "topic_id": topic_id,
-            "query": query,
-            "status": "queued",
-            "created_at": now,
-            "updated_at": now,
-        }
-    )
+    try:
+        await _tasks_collection().insert_one(
+            {
+                "_id": task_id,
+                "task_id": task_id,
+                "topic_id": topic_id,
+                "query": query,
+                "status": "queued",
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
+    except ServerSelectionTimeoutError as exc:
+        raise RuntimeError(
+            "MongoDB connection failed. Check MONGODB_URI, network access, and Atlas IP allowlist."
+        ) from exc
+    except PyMongoError as exc:
+        raise RuntimeError(f"MongoDB error: {exc}") from exc
     return task_id
 
 
@@ -91,6 +99,10 @@ async def run_research_task(task_id: str) -> None:
                 "error": str(exc),
             },
         )
+
+
+async def get_research_result(topic_id: str) -> Optional[Dict[str, Any]]:
+    return await _research_collection().find_one({"topic_id": topic_id})
 
 
 async def synthesize_research(topic_id: str, sources: List[Source]) -> str:

@@ -1,57 +1,31 @@
 import asyncio
 import os
-from typing import Any, Dict, List, Optional
+from typing import List
 
-import httpx
+from parallel import Parallel
+from parallel.types import TaskSpecParam, TextSchemaParam
 
 from app.models.schemas import ResearchResult, Source
 
 
-def _build_url(path_template: str, task_id: Optional[str] = None) -> str:
-    base_url = os.getenv("PARALLEL_BASE_URL", "https://api.parallel.ai").rstrip("/")
-    path = path_template
-    if task_id:
-        path = path_template.format(task_id=task_id)
-    if not path.startswith("/"):
-        path = f"/{path}"
-    return f"{base_url}{path}"
+_client: Parallel | None = None
 
 
-def _auth_headers() -> Dict[str, str]:
-    api_key = os.getenv("PARALLEL_API_KEY", "").strip()
-    if not api_key:
-        return {}
-    return {"Authorization": f"Bearer {api_key}"}
+def _get_client() -> Parallel:
+    global _client
+    if _client is None:
+        api_key = os.getenv("PARALLEL_API_KEY", "").strip()
+        if not api_key:
+            raise RuntimeError("PARALLEL_API_KEY is required")
+        _client = Parallel(api_key=api_key)
+    return _client
 
 
-def _normalize_status(raw_status: str) -> str:
-    status = (raw_status or "").lower()
-    if status in {"complete", "completed", "succeeded", "success", "done"}:
-        return "complete"
-    if status in {"error", "failed", "failure"}:
-        return "error"
-    if status in {"queued", "pending"}:
-        return "queued"
-    if status in {"running", "in_progress", "processing"}:
-        return "running"
-    return status or "unknown"
-
-
-def _extract_sources(payload: Any) -> List[Source]:
-    if not payload:
-        return []
-
-    candidates = None
-    if isinstance(payload, dict):
-        for key in ("sources", "results", "items", "articles"):
-            if key in payload:
-                candidates = payload.get(key)
-                break
-    if candidates is None:
-        candidates = payload if isinstance(payload, list) else []
-
+def _normalize_sources(raw_sources) -> List[Source]:
     sources: List[Source] = []
-    for item in candidates or []:
+    if not isinstance(raw_sources, list):
+        return sources
+    for item in raw_sources:
         if not isinstance(item, dict):
             continue
         sources.append(
@@ -66,80 +40,39 @@ def _extract_sources(payload: Any) -> List[Source]:
     return sources
 
 
-async def submit_task(query: str, limit: Optional[int] = None) -> str:
-    task_path = os.getenv("PARALLEL_TASK_PATH", "/task")
-    payload: Dict[str, Any] = {"query": query}
-    if limit is not None:
-        payload["limit"] = limit
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.post(
-            _build_url(task_path),
-            json=payload,
-            headers=_auth_headers(),
-        )
-        response.raise_for_status()
-        data = response.json()
-
-    task_id = data.get("task_id") or data.get("taskId") or data.get("id")
-    if not task_id:
-        raise RuntimeError("Parallel.ai TaskAPI did not return a task id.")
-    return task_id
-
-
-async def fetch_task(task_id: str) -> Dict[str, Any]:
-    status_path = os.getenv("PARALLEL_TASK_STATUS_PATH", "/task/{task_id}")
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(
-            _build_url(status_path, task_id=task_id),
-            headers=_auth_headers(),
-        )
-        response.raise_for_status()
-        return response.json()
-
-
 async def run_task(
     query: str,
     limit: int = 10,
     poll_interval: float = 1.5,
     timeout_seconds: float = 60,
 ) -> ResearchResult:
-    task_id = await submit_task(query, limit=limit)
-    deadline = asyncio.get_event_loop().time() + timeout_seconds
+    processor = os.getenv("PARALLEL_PROCESSOR", "ultra")
 
-    while True:
-        payload = await fetch_task(task_id)
-        raw_status = payload.get("status") or payload.get("state") or ""
-        status = _normalize_status(raw_status)
+    def _run() -> ResearchResult:
+        client = _get_client()
+        task_run = client.task_run.create(
+            input=query,
+            processor=processor,
+            task_spec=TaskSpecParam(output_schema=TextSchemaParam()),
+        )
+        run_result = client.task_run.result(
+            task_run.run_id,
+            api_timeout=int(timeout_seconds),
+        )
 
-        if status == "complete":
-            result_payload = payload.get("result") or payload.get("output") or payload
-            summary = (
-                result_payload.get("summary")
-                if isinstance(result_payload, dict)
-                else None
-            )
-            if not summary and isinstance(result_payload, dict):
-                summary = (
-                    result_payload.get("answer")
-                    or result_payload.get("synthesis")
-                    or result_payload.get("overview")
-                )
-            sources = _extract_sources(result_payload)
-            return ResearchResult(summary=summary, sources=sources)
+        output = getattr(run_result, "output", None)
+        summary = ""
+        sources: List[Source] = []
 
-        if status == "error":
-            error_message = (
-                payload.get("error")
-                or payload.get("message")
-                or "Parallel.ai TaskAPI failed"
-            )
-            raise RuntimeError(error_message)
+        if isinstance(output, dict):
+            summary = output.get("summary") or output.get("answer") or ""
+            sources = _normalize_sources(output.get("sources") or output.get("results"))
+        else:
+            summary = str(output) if output is not None else ""
 
-        if asyncio.get_event_loop().time() >= deadline:
-            raise TimeoutError("Parallel.ai TaskAPI timed out while waiting for task.")
+        return ResearchResult(summary=summary, sources=sources)
 
-        await asyncio.sleep(poll_interval)
+    return await asyncio.to_thread(_run)
 
 
 async def search_sources(query: str, limit: int = 10) -> List[Source]:

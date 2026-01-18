@@ -8,6 +8,7 @@ import Listen from "./pages/Listen.jsx";
 import Read from "./pages/Read.jsx";
 import Agents from "./pages/Agents.jsx";
 import Agents2 from "./pages/Agents2.jsx";
+import Research from "./pages/Research.jsx";
 
 const App = () => {
   return (
@@ -16,11 +17,15 @@ const App = () => {
         <Link to="/" style={{ marginRight: "12px" }}>
           Home
         </Link>
+        <Link to="/research" style={{ marginRight: "12px" }}>
+          Research
+        </Link>
         <Link to="/agents">Agents</Link>
         <Link to="/agents2">Agents2</Link>
       </nav>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/research" element={<Research />} />
         <Route path="/agents" element={<Agents />} />
         <Route path="/agents2" element={<Agents2 />} />
         <Route path="/topics/:id" element={<Topic />} />

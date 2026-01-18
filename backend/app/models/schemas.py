@@ -108,3 +108,10 @@ class ResearchTaskStatusResponse(BaseModel):
     status: str
     result: Optional[ResearchResult] = None
     error: Optional[str] = None
+
+
+class ResearchResultResponse(BaseModel):
+    topic_id: str
+    summary: Optional[str] = None
+    sources: List[Source] = []
+    generated_at: Optional[datetime] = None

@@ -20,6 +20,18 @@ const Layout = ({ children }) => {
                         >
                             Topics
                         </Link>
+                        <Link
+                            to="/research"
+                            className={`nav-link ${location.pathname === '/research' ? 'active' : ''}`}
+                        >
+                            Research
+                        </Link>
+                        <Link
+                            to="/agents"
+                            className={`nav-link ${location.pathname === '/agents' ? 'active' : ''}`}
+                        >
+                            Agents
+                        </Link>
                     </nav>
                 </div>
             </header>
