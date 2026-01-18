@@ -12,6 +12,7 @@ const Listen = () => {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(true);
   const [scriptData, setScriptData] = useState(null);
+  const [audioUrl, setAudioUrl] = useState("");
 
   useEffect(() => {
     const generateScript = async () => {
@@ -20,16 +21,27 @@ const Listen = () => {
         // contentId format: "topicId_format_duration"
         const parts = contentId.split("_");
         const topicId = parts[0];
-        const format = parts[1] || "podcast";
         const duration = parseInt(parts[2], 10) || 5;
 
-        const response = await axios.post(`${API_URL}/generate/script`, {
+        const response = await axios.post(`${API_URL}/generate/podcast`, {
           topic_id: topicId,
           duration_minutes: duration,
-          format: format
         });
 
         setScriptData(response.data);
+        if (response.data?.audio_base64) {
+          const byteCharacters = atob(response.data.audio_base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i += 1) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], {
+            type: response.data?.mime_type || "audio/mpeg",
+          });
+          const url = URL.createObjectURL(blob);
+          setAudioUrl(url);
+        }
       } catch (err) {
         console.error("Failed to generate script:", err);
       } finally {
@@ -41,6 +53,14 @@ const Listen = () => {
       generateScript();
     }
   }, [contentId]);
+
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   const handleInterrupt = (currentTime) => {
     setShowQuestion(true);
@@ -76,6 +96,12 @@ const Listen = () => {
         description="Listen to an engaging discussion of the key stories"
         onInterrupt={handleInterrupt}
       />
+
+      {audioUrl ? (
+        <div style={{ marginTop: 16 }}>
+          <audio controls src={audioUrl} style={{ width: "100%" }} />
+        </div>
+      ) : null}
 
       {scriptData && (
         <div className="transcript-section">

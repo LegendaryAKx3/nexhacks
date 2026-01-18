@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from app.db.mongodb import get_database
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
+import re
 from app.models.schemas import ResearchResult, Source
 from app.services.parallel_ai import run_task
 
@@ -127,6 +128,31 @@ async def get_research_result(topic_id: str) -> Optional[Dict[str, Any]]:
         return await _research_collection().find_one({"topic_id": topic_id})
     except ServerSelectionTimeoutError:
         return None
+
+
+def normalize_research_summary(summary: str) -> str:
+    if not summary:
+        return ""
+
+    if "TaskRunTextOutput" in summary and "content=" in summary:
+        start = summary.find("content=")
+        if start != -1:
+            start += len("content=")
+            if start < len(summary) and summary[start] in {"'", "\""}:
+                quote = summary[start]
+                start += 1
+                end = summary.rfind(f"{quote}, type=")
+                if end == -1:
+                    end = summary.rfind(quote)
+                if end > start:
+                    extracted = summary[start:end]
+                    try:
+                        return extracted.encode("utf-8").decode("unicode_escape")
+                    except Exception:
+                        return extracted
+
+    cleaned = re.sub(r"^TaskRunTextOutput\\(.*?content=", "", summary, flags=re.DOTALL)
+    return cleaned.strip()
 
 
 async def synthesize_research(topic_id: str, sources: List[Source]) -> str:

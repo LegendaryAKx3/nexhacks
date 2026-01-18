@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional
 
 # --- Local JSON File Storage Implementation ---
 
-DB_FILE = Path("local_data.json")
+DB_FILE = Path(__file__).resolve().parents[2] / "local_data.json"
 
 class LocalJsonCollection:
     def __init__(self, name: str, db_file: Path):
